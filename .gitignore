@@ -1,0 +1,9 @@
+app/build/
+app/capturas/
+prototipo/habla
+.DS_Store
+informe-*.md
+SESSION.md
+DECISIONS.md
+KNOWLEDGE.md
+.claude/

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hablapp: dicta en cualquier app de tu Mac</title>
+<meta name="description" content="hablapp convierte tu voz en texto en cualquier app de tu Mac. Gratis, privado y sin nube. Código abierto.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" type="image/png" href="favicon.png">
+<meta property="og:title" content="hablapp">
+<meta property="og:description" content="Dicta en cualquier app de tu Mac. Gratis, privado y sin nube.">
+<meta property="og:image" content="https://briascoi.github.io/hablapp/icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <a class="brand" href="#"><img src="favicon.png" alt="" width="32" height="32">hablapp</a>
+  <div class="links"><a href="#como">Cómo funciona</a><a href="#privacidad">Privacidad</a><a href="#instalar">Instalar</a><a href="#faq">Preguntas</a><a class="keep" href="https://github.com/briascoi/hablapp">GitHub</a></div>
+</nav>
+
+<header class="hero">
+  <div>
+    <img class="icon" src="icon.png" alt="Ícono de hablapp" width="96" height="96">
+    <h1>Dicta en cualquier app de tu Mac.</h1>
+    <p class="lead">Gratis, privado y sin nube. Mantén <kbd>fn</kbd>, habla y suelta: el texto aparece donde está el cursor, con puntuación y en el tono de cada app.</p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/briascoi/hablapp/releases/latest/download/hablapp.zip">Descargar para Mac</a>
+      <a class="btn soft" href="https://github.com/briascoi/hablapp">Ver el código</a>
+    </div>
+    <p class="small">macOS 26 · Apple Silicon · Código abierto</p>
+  </div>
+  <img class="shot" src="img/home.jpg" alt="Pantalla principal de hablapp con el historial de dictados y las estadísticas" width="1100" height="764">
+</header>
+
+<section id="como">
+  <h2>Cómo funciona</h2>
+  <p class="muted">Sin ventanas intermedias: hablas y el texto aparece en la app que estés usando.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>Mantén fn y habla</h3>
+      <p class="muted">Mantén <kbd>fn</kbd> en cualquier app, habla y suelta. hablapp transcribe, agrega la puntuación y pega el texto en el cursor.</p>
+    </div>
+    <div class="card">
+      <h3>Manos libres</h3>
+      <p class="muted">Cuando quieras dictar un rato largo, activa el modo manos libres con un atajo y olvídate de la tecla.</p>
+    </div>
+    <div class="card">
+      <h3>Modo comando</h3>
+      <p class="muted">Selecciona un texto y dile qué hacer con él: reescribirlo, acortarlo o cambiarle el tono.</p>
+    </div>
+    <div class="card">
+      <h3>Transforms</h3>
+      <p class="muted">Atajos para pulir, traducir o resumir la selección con un solo gesto. Tú eliges cuáles tener a mano.</p>
+    </div>
+  </div>
+  <div class="grid">
+    <figure class="card" style="margin:0"><h3>Estilo por app</h3><p class="muted">Más formal en el correo, más suelto en el chat.</p><img class="shot" src="img/style.jpg" alt="Página Estilo de hablapp con las categorías de tono" width="1100" height="764" loading="lazy"></figure>
+    <figure class="card" style="margin:0"><h3>Transforms</h3><p class="muted">Tus atajos de texto, a un gesto de distancia.</p><img class="shot" src="img/transforms.jpg" alt="Página Transforms de hablapp con la lista de atajos" width="1100" height="764" loading="lazy"></figure>
+  </div>
+</section>
+
+<section id="privacidad">
+  <div class="card priv">
+    <span class="badge">100% en tu Mac</span>
+    <h2 style="margin-top:14px">Tu voz no sale de tu Mac</h2>
+    <p>La transcripción se hace en el equipo, con el motor de voz de Apple (o whisper.cpp si lo prefieres), y el formato con inteligencia artificial usa Apple Intelligence, también en el equipo. No hay cuentas ni analítica.</p>
+    <p style="margin:0">La única conexión a internet es la búsqueda de actualizaciones en GitHub. Y como el código es abierto, puedes comprobarlo tú mismo.</p>
+  </div>
+</section>
+
+<section id="instalar">
+  <div class="two">
+    <div>
+      <h2>Instalar</h2>
+      <p class="muted">hablapp todavía no está notarizada por Apple, así que la primera apertura lleva un paso extra.</p>
+      <ol class="steps">
+        <li>Descarga el <a href="https://github.com/briascoi/hablapp/releases/latest/download/hablapp.zip">zip</a> y descomprímelo.</li>
+        <li>Mueve <strong>hablapp</strong> a la carpeta Aplicaciones.</li>
+        <li>Ábrela. macOS la bloqueará la primera vez.</li>
+        <li>Ve a Ajustes del Sistema › Privacidad y seguridad y pulsa <strong>Abrir igualmente</strong>.</li>
+        <li>Concede los permisos de <strong>Micrófono</strong> y <strong>Accesibilidad</strong> cuando los pida.</li>
+      </ol>
+      <p class="small">Las actualizaciones siguientes son automáticas.</p>
+    </div>
+    <img class="shot" src="img/accesibilidad.jpg" alt="Pantalla de bienvenida de hablapp pidiendo el permiso de Accesibilidad" width="709" height="900" loading="lazy">
+  </div>
+</section>
+
+<!-- Donaciones: descomentar cuando existan GitHub Sponsors y Cafecito.
+<section id="apoyar">
+  <h2>Apoyar el proyecto</h2>
+  <p class="muted">hablapp es gratis y lo seguirá siendo. Si te ahorra tiempo y quieres ayudar a que siga creciendo:</p>
+  <div class="cta">
+    <a class="btn" href="https://github.com/sponsors/briascoi">GitHub Sponsors</a>
+        <a class="btn soft" href="https://cafecito.app/USUARIO">Invítame un cafecito</a>
+  </div>
+</section>
+-->
+
+<section id="sobre-mi">
+  <h2>Sobre mí</h2>
+  <p>Soy Ismael Briasco. Llevo más de 25 años en negocios digitales y hoy doy conferencias, formación y mentoría a líderes ejecutivos y founders. Vivo entre Mijas y Marbella. Uso Claude a diario, con Cowork, Code, MCP y Skills, y creo que la IA no reemplaza a los líderes: acelera a los que ya saben. hablapp es una herramienta para dictar en cualquier app sin mandar la voz a la nube. La comparto como código abierto por si también te sirve a ti.</p>
+</section>
+
+<section id="faq">
+  <h2>Preguntas frecuentes</h2>
+  <details><summary>¿Es gratis?</summary><p>Sí. hablapp es gratis y de código abierto, con licencia MIT.</p></details>
+  <details><summary>¿Por qué pide el permiso de Accesibilidad?</summary><p>Para detectar la tecla fn, leer el contexto del cursor y pegar el texto en la app que estés usando. Sin ese permiso no puede escribir por ti.</p></details>
+  <details><summary>¿Funciona sin Apple Intelligence?</summary><p>Sí. La transcripción no la necesita. Solo el formato con inteligencia artificial depende de ella, y sin eso sigues dictando con normalidad.</p></details>
+  <details><summary>¿Funciona en Macs con Intel?</summary><p>No. hablapp requiere macOS 26 y un Mac con Apple Silicon.</p></details>
+</section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <a href="https://github.com/briascoi/hablapp">GitHub</a>
+    <a href="https://github.com/briascoi/hablapp/blob/main/LICENSE">Licencia MIT</a>
+    <a href="https://github.com/briascoi/hablapp/issues">Reportar un problema</a>
+  </div>
+</footer>
+</body>
+</html>
