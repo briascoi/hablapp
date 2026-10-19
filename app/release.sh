@@ -44,7 +44,7 @@ run shasum -a 256 build/hablapp.zip
 
 # 5. Commit, tag, push y release
 run git commit -am "Release v$VER"
-run git tag "v$VER"
+run git tag -a "v$VER" -m "hablapp $VER"
 run git push --follow-tags
 if [[ -n "$NOTES" ]]; then
   run gh release create "v$VER" build/hablapp.zip --title "hablapp $VER" --notes "$NOTES"
