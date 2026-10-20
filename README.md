@@ -46,6 +46,10 @@ También se pueden probar desde la Terminal: `open "hablapp://toggle"`.
 
 El audio y el texto se procesan en tu Mac y no salen de ella. No hay cuentas ni analítica. La única conexión a internet de la app es para consultar si hay versiones nuevas en GitHub.
 
+## Apoyar
+
+hablapp es gratis y lo seguirá siendo. Si te ahorra tiempo, puedes [invitarme un cafecito](https://cafecito.app/briascoi).
+
 ## Licencia
 
 MIT. Ver [LICENSE](LICENSE).

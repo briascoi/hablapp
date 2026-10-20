@@ -5,16 +5,16 @@ import Cocoa
 import SwiftUI
 import Security
 
-// Enlaces del proyecto. TODO Isma: confirmar usuario de Cafecito y URLs personales.
+// Enlaces del proyecto.
 enum Links {
     static let repo = "briascoi/hablapp"
     static let site = URL(string: "https://briascoi.github.io/hablapp/")!
     static let github = URL(string: "https://github.com/\(repo)")!
     static let issues = URL(string: "https://github.com/\(repo)/issues/new")!
     static let license = URL(string: "https://github.com/\(repo)/blob/main/LICENSE")!
-    // Donaciones: nil oculta el botón. Completar cuando existan las cuentas (y docs/index.html, README, .github/FUNDING.yml).
+    // Donaciones: nil oculta el botón. Sponsors pendiente de aprobación (activar también en docs/index.html, README y .github/FUNDING.yml).
     static let sponsors: URL? = nil   // https://github.com/sponsors/briascoi
-    static let cafecito: URL? = nil   // https://cafecito.app/<usuario>
+    static let cafecito: URL? = URL(string: "https://cafecito.app/briascoi")
     static let personalSite: URL? = URL(string: "https://ismaelbriasco.com")
     static let linkedin: URL? = URL(string: "https://www.linkedin.com/in/briascoi")
 }
