@@ -244,24 +244,28 @@ final class Updater: ObservableObject {
 struct AboutSection: View {
     @ObservedObject var up = Updater.shared
     @AppStorage("autoUpdate") var autoUpdate = true
-    @State var showNotes = false
 
     static let bio = "Soy Ismael Briasco. Llevo más de 25 años en negocios digitales y hoy acompaño a líderes y founders a trabajar con IA. hablapp sirve para dictar en cualquier app sin mandar la voz a la nube, y la comparto como código abierto."
 
     var body: some View {
-        Group_ {
-            Row("hablapp \(AppInfo.version)", up.status) {
-                HStack(spacing: 8) {
-                    if let r = up.available { DarkButton("Actualizar y reiniciar") { up.install(r) } }
-                    SoftButton(up.busy ? "Un momento…" : "Buscar actualizaciones") { up.check(userInitiated: true) }.disabled(up.busy)
-                }
+        // Cabecera: ícono, nombre y versión, con la actualización al lado.
+        HStack(spacing: 14) {
+            Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 52, height: 52)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("hablapp").font(T.serif(22)).foregroundStyle(T.text)
+                Text(up.status.isEmpty ? "Versión \(AppInfo.version)" : "Versión \(AppInfo.version) · \(up.status)")
+                    .font(T.sans(12)).foregroundStyle(T.muted)
             }
+            Spacer()
+            if let r = up.available {
+                DarkButton("Actualizar y reiniciar") { up.install(r) }
+            } else {
+                SoftButton(up.busy ? "Buscando…" : "Buscar actualizaciones") { up.check(userInitiated: true) }.disabled(up.busy)
+            }
+        }
+        Group_ {
             if let r = up.available, !r.notes.isEmpty {
-                DisclosureGroup("Novedades de \(r.version)", isExpanded: $showNotes) {
-                    ScrollView { Text(r.notes).font(T.sans(12)).foregroundStyle(T.muted).frame(maxWidth: .infinity, alignment: .leading) }
-                        .frame(maxHeight: 120)
-                }
-                .font(T.sans(13)).foregroundStyle(T.text).padding(.horizontal, 14).padding(.vertical, 10)
+                Row("Novedades de \(r.version)", r.notes) { EmptyView() }
             }
             Toggler("Buscar actualizaciones automáticamente", isOn: $autoUpdate)
         }
@@ -269,40 +273,47 @@ struct AboutSection: View {
         if Links.sponsors != nil || Links.cafecito != nil {
             Text("Apoyá hablapp").font(T.sans(13, .semibold)).foregroundStyle(T.text)
             Group_ {
-                Row("hablapp es gratis y de código abierto", "Si te sirve, podés invitarme un café.") {
-                    HStack(spacing: 8) {
-                        if let u = Links.sponsors { link("GitHub Sponsors", u) }
-                        if let u = Links.cafecito { link("Cafecito", u) }
-                    }
-                }
+                if let u = Links.sponsors { linkRow("GitHub Sponsors", "Un aporte mensual o único", u) }
+                if let u = Links.cafecito { linkRow("Cafecito", "Invitame un café", u) }
             }
         }
 
         Text("Sobre mí").font(T.sans(13, .semibold)).foregroundStyle(T.text)
-        Group_ {
-            Row("Ismael Briasco", Self.bio) {
-                VStack(spacing: 6) {
-                    if let u = Links.personalSite { link("Sitio", u) }
-                    link("GitHub", URL(string: "https://github.com/briascoi")!)
-                    if let u = Links.linkedin { link("LinkedIn", u) }
-                }
+        VStack(alignment: .leading, spacing: 12) {
+            Text(Self.bio).font(T.sans(13)).foregroundStyle(T.text).lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 16) {
+                if let u = Links.personalSite { textLink("ismaelbriasco.com", u) }
+                if let u = Links.linkedin { textLink("LinkedIn", u) }
+                textLink("GitHub", URL(string: "https://github.com/briascoi")!)
             }
         }
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        .background(T.panel, in: RoundedRectangle(cornerRadius: 12))
 
-        Text("Enlaces").font(T.sans(13, .semibold)).foregroundStyle(T.text)
+        Text("Proyecto").font(T.sans(13, .semibold)).foregroundStyle(T.text)
         Group_ {
-            Row("Proyecto", "") {
-                HStack(spacing: 8) {
-                    link("Sitio web", Links.site)
-                    link("Código en GitHub", Links.github)
-                    link("Reportar un problema", Links.issues)
-                    link("Licencia MIT", Links.license)
-                }
-            }
+            linkRow("Sitio web", "briascoi.github.io/hablapp", Links.site)
+            linkRow("Código fuente", "Abierto, en GitHub", Links.github)
+            linkRow("Reportar un problema", "Contanos qué falló", Links.issues)
+            linkRow("Licencia", "MIT", Links.license)
         }
     }
 
-    func link(_ title: String, _ url: URL) -> some View {
-        SoftButton(title) { NSWorkspace.shared.open(url) }.fixedSize()
+    // Fila entera clicable con flecha, como los enlaces de Ajustes del Sistema.
+    func linkRow(_ title: String, _ detail: String, _ url: URL) -> some View {
+        Row(title, detail) { Image(systemName: "arrow.up.right").font(T.sans(11, .semibold)).foregroundStyle(T.muted) }
+            .contentShape(Rectangle())
+            .onTapGesture { NSWorkspace.shared.open(url) }
+            .onHover { $0 ? NSCursor.pointingHand.push() : NSCursor.pop() }
+    }
+
+    func textLink(_ title: String, _ url: URL) -> some View {
+        Button { NSWorkspace.shared.open(url) } label: {
+            HStack(spacing: 3) {
+                Text(title)
+                Image(systemName: "arrow.up.right").font(T.sans(9, .semibold))
+            }.font(T.sans(12, .medium)).foregroundStyle(T.accent)
+        }.buttonStyle(.plain)
     }
 }

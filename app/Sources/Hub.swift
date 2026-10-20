@@ -278,24 +278,24 @@ struct SettingsView: View {
                     Picker("", selection: $mic) {
                         Text("Automático").tag("")
                         ForEach(Mics.list()) { Text($0.name).tag($0.id) }
-                    }.labelsHidden().frame(width: 200)
+                    }.labelsHidden().frame(width: 200, alignment: .trailing)
                 }
                 Row("Idioma", "El idioma en el que dictás") {
                     Picker("", selection: $language) {
                         Text("Español").tag("es"); Text("Inglés").tag("en"); Text("Detectar solo").tag("auto")
-                    }.labelsHidden().frame(width: 200)
+                    }.labelsHidden().frame(width: 200, alignment: .trailing)
                 }
                 Row("Motor de transcripción", Transcriber.whisperAvailable ? "Apple usa el modelo de voz del sistema" : "whisper.cpp: no instalado") {
                     Picker("", selection: $engine) {
                         Text("Apple (recomendado)").tag("apple")
                         Text("whisper.cpp").tag("whisper").disabled(!Transcriber.whisperAvailable)
-                    }.labelsHidden().frame(width: 200)
+                    }.labelsHidden().frame(width: 200, alignment: .trailing)
                 }
                 if engine == "whisper" {
                     Row("Modelo de transcripción", "Más grande es más preciso y más lento") {
                         Picker("", selection: $model) {
                             ForEach(models(), id: \.self) { Text($0.replacingOccurrences(of: "ggml-", with: "").replacingOccurrences(of: ".bin", with: "")).tag($0) }
-                        }.labelsHidden().frame(width: 200)
+                        }.labelsHidden().frame(width: 200, alignment: .trailing)
                     }
                 }
                 Row("Tu nombre", "Para el saludo del inicio") {
@@ -305,7 +305,7 @@ struct SettingsView: View {
                 Row("Tema", "") {
                     Picker("", selection: $theme) {
                         Text("Sistema").tag("system"); Text("Claro").tag("light"); Text("Oscuro").tag("dark")
-                    }.labelsHidden().frame(width: 200).onChange(of: theme) { AppDelegate.applyTheme() }
+                    }.labelsHidden().frame(width: 200, alignment: .trailing).onChange(of: theme) { AppDelegate.applyTheme() }
                 }
             }
         case .system:

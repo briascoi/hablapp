@@ -17,7 +17,6 @@ final class Flow: ObservableObject {
     static let shared = Flow()
     @Published var phase: Phase = .idle
     @Published var levels: [Float] = Array(repeating: 0, count: 11)
-    @Published var hovering = false
     @Published var lastText = ""
 
     func notice(_ text: String) {

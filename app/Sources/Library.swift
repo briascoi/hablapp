@@ -337,7 +337,13 @@ struct AppPrompts: View {
                 .buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
             }
             if configured.isEmpty {
-                Text("Todavía no agregaste ninguna app.").font(T.sans(13)).foregroundStyle(T.muted).padding(.vertical, 6)
+                HStack(spacing: 10) {
+                    Image(systemName: "app.badge").font(T.sans(16)).foregroundStyle(T.muted)
+                    Text("Todavía no agregaste ninguna app. Tocá \"Agregar app\" y elegí una de las que ya usaste para dictar.")
+                        .font(T.sans(13)).foregroundStyle(T.muted)
+                }
+                .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                .background(T.panel, in: RoundedRectangle(cornerRadius: 12))
             } else {
                 RowList(items: configured) { r in
                     VStack(alignment: .leading, spacing: 8) {

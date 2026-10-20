@@ -1,5 +1,6 @@
 // La barra flotante: una píldora negra abajo al centro que nunca roba el foco.
-// Reposo: rayita. Hover: invita a dictar. Grabando: onda en vivo. Manos libres: cancelar y parar.
+// Reposo: rayita. Grabando: onda en vivo. Manos libres: cancelar y parar.
+// Como Wispr Flow, deja pasar todos los clics: sólo los toma en manos libres, sobre sus botones.
 
 import Cocoa
 import SwiftUI
@@ -8,6 +9,7 @@ final class FlowBar {
     private let panel: NSPanel
     private let size = NSSize(width: 340, height: 64)
     private var monitors: [Any] = []
+    private var phaseSink: Any?
 
     init() {
         panel = NSPanel(contentRect: NSRect(origin: .zero, size: size),
@@ -28,10 +30,10 @@ final class FlowBar {
 
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
                                                object: nil, queue: .main) { [weak self] _ in self?.place() }
-        // Hover: la ventana es transparente y deja pasar los clics salvo cuando el mouse está sobre la píldora.
         let check: (NSEvent?) -> Void = { [weak self] _ in self?.trackMouse() }
         monitors.append(NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved, handler: check) as Any)
         monitors.append(NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { check($0); return $0 } as Any)
+        phaseSink = Flow.shared.$phase.receive(on: RunLoop.main).sink { [weak self] _ in self?.trackMouse() }
     }
 
     private var screen: NSScreen? {
@@ -46,11 +48,9 @@ final class FlowBar {
     private func trackMouse() {
         let p = NSEvent.mouseLocation
         if !panel.frame.contains(p), screen?.frame.contains(panel.frame.origin) == false { place() }
-        let pill = NSRect(x: panel.frame.midX - 110, y: panel.frame.minY, width: 220, height: 44)
-        let over = pill.contains(p)
-        let flow = Flow.shared
-        if over != flow.hovering {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { flow.hovering = over }
+        var over = false
+        if case .recording(true, _) = Flow.shared.phase {
+            over = NSRect(x: panel.frame.midX - 85, y: panel.frame.minY, width: 170, height: 44).contains(p)
         }
         panel.ignoresMouseEvents = !over
     }
@@ -65,7 +65,6 @@ struct FlowBarView: View {
             Spacer()
             pill
                 .animation(.spring(response: 0.35, dampingFraction: 0.78), value: flow.phase)
-                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: flow.hovering)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.bottom, 4)
@@ -74,26 +73,10 @@ struct FlowBarView: View {
     @ViewBuilder var pill: some View {
         switch flow.phase {
         case .idle:
-            if flow.hovering {
-                Button { Engine.shared.toggleHandsFree() } label: {
-                    HStack(spacing: 6) {
-                        Text("Clic o mantené").foregroundStyle(.white.opacity(0.75))
-                        Text("fn").font(.system(size: 11, weight: .semibold)).foregroundStyle(Color(hex: 0x2A1A00))
-                            .padding(.horizontal, 5).padding(.vertical, 1)
-                            .background(Color(hex: 0xF4A647), in: RoundedRectangle(cornerRadius: 4))
-                        Text("para dictar").foregroundStyle(.white.opacity(0.75))
-                    }
-                    .font(.system(size: 12, weight: .medium))
-                    .padding(.horizontal, 14).frame(height: 32)
-                    .background(capsule)
-                }.buttonStyle(.plain)
-                .transition(.scale(scale: 0.6).combined(with: .opacity))
-            } else {
-                Capsule().fill(.black.opacity(0.82))
-                    .overlay(Capsule().stroke(.white.opacity(0.28), lineWidth: 1))
-                    .frame(width: 42, height: 8)
-                    .opacity(always ? 1 : 0)
-            }
+            Capsule().fill(.black.opacity(0.82))
+                .overlay(Capsule().stroke(.white.opacity(0.28), lineWidth: 1))
+                .frame(width: 42, height: 8)
+                .opacity(always ? 1 : 0)
         case .recording(let handsFree, let command):
             HStack(spacing: 10) {
                 if handsFree {
