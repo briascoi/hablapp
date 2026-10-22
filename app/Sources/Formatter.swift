@@ -6,6 +6,7 @@ import FoundationModels
 
 struct Context {
     var app = "", bundle = "", title = "", before = "", selected = "", after = ""
+    var documentURL: URL?
     var category: Category = .other
 }
 
@@ -20,7 +21,21 @@ enum Ctx {
         if let pid = front?.processIdentifier {
             let appEl = AXUIElementCreateApplication(pid)
             AXUIElementSetMessagingTimeout(appEl, 0.25)
-            if let win: AXUIElement = attr(appEl, kAXFocusedWindowAttribute) { c.title = attr(win, kAXTitleAttribute) ?? "" }
+            if let win: AXUIElement = attr(appEl, kAXFocusedWindowAttribute) {
+                c.title = attr(win, kAXTitleAttribute) ?? ""
+                if ContextTransforms.browsers.contains(c.bundle) {
+                    if let document: String = attr(win, kAXDocumentAttribute) {
+                        c.documentURL = URL(string: document)
+                    }
+                    // Algunos navegadores exponen la URL en el área web, sobre el campo enfocado.
+                    var node: AXUIElement? = attr(appEl, kAXFocusedUIElementAttribute)
+                    for _ in 0..<8 {
+                        guard c.documentURL == nil, let element = node else { break }
+                        c.documentURL = attr(element, kAXURLAttribute)
+                        node = attr(element, kAXParentAttribute)
+                    }
+                }
+            }
         }
         c.category = category(bundle: c.bundle, title: c.title)
         guard let el: AXUIElement = attr(system, kAXFocusedUIElementAttribute),
@@ -176,14 +191,7 @@ enum Formatter {
         let useLLM = UserDefaults.standard.object(forKey: "aiFormat") as? Bool ?? true
         if useLLM, LLM.available, !raw.isEmpty {
             let s = session ?? LanguageModelSession(instructions: instructions(c.category, bundle: c.bundle, app: c.app))
-            let prompt = """
-            App: \(c.app)
-            Texto antes del cursor: «\(c.before)»
-            Texto seleccionado, que el dictado reemplaza: «\(c.selected)»
-            Texto después del cursor: «\(c.after)»
-            Dictado crudo: «\(raw)»
-            """
-            if let out = await LLM.run(s, prompt), !out.isEmpty { text = out }
+            if let out = await LLM.run(s, promptContext(c) + "\nDictado crudo: «\(raw)»"), !out.isEmpty { text = out }
         }
 
         text = applyDictionary(text)
@@ -191,6 +199,16 @@ enum Formatter {
         if let last = c.before.last, !last.isWhitespace, c.selected.isEmpty, !text.isEmpty { text = " " + text }
         res.text = text
         return res
+    }
+
+    /// Parte del prompt que se conoce al empezar a dictar: se usa para precalentar el modelo.
+    static func promptContext(_ c: Context) -> String {
+        """
+        App: \(c.app)
+        Texto antes del cursor: «\(c.before)»
+        Texto seleccionado, que el dictado reemplaza: «\(c.selected)»
+        Texto después del cursor: «\(c.after)»
+        """
     }
 
     static func command(_ instruction: String, selection: String) async -> String? {

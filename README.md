@@ -27,6 +27,14 @@ cd app && ./build.sh
 
 Deja la app en `app/build/hablapp.app`. Con `./build.sh install` además la copia a `~/Applications` y la abre. Si no tienes el certificado "hablapp Dev" en tu llavero, la app se firma ad-hoc.
 
+## Formato por aplicación
+
+En **Transforms › Transform por app**, elige **Agregar app** y asigna un transform a cada aplicación. Puedes usar, por ejemplo, «Prompt engineer» en ChatGPT y Claude, y crear un transform con tus instrucciones de formato para WhatsApp.
+
+Las aplicaciones sin regla usan el **Transform general**. Elige **Ninguno** para conservar el formato habitual del dictado en una aplicación concreta. Las reglas se guardan automáticamente. El interruptor de Transforms permite desactivar tanto los atajos como los transforms automáticos.
+
+También puedes asignar reglas para ChatGPT, Claude y WhatsApp en el navegador. El servicio tiene prioridad sobre la regla del navegador. Hablapp lo reconoce por la dirección que expone Accesibilidad o, si no está disponible, por la marca en el título de la pestaña. Si no logra reconocerlo, usa la regla del navegador o el general. Los transforms requieren Apple Intelligence.
+
 ## Atajos con Raycast y Atajos
 
 hablapp responde a URLs `hablapp://`. En la app de Atajos usá la acción **Abrir URLs**; en Raycast, creá un **Quicklink** con la URL.

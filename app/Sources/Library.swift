@@ -399,8 +399,8 @@ struct TransformsPage: View {
             }
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Aplicar después de cada dictado").font(T.sans(14, .medium)).foregroundStyle(T.text)
-                    Text("Pasa el dictado por un transform antes de pegarlo. Suma unos segundos.")
+                    Text("Transform general").font(T.sans(14, .medium)).foregroundStyle(T.text)
+                    Text("Se aplica después de dictar en las apps sin regla propia. Suma unos segundos.")
                         .font(T.sans(12)).foregroundStyle(T.muted)
                 }
                 Spacer()
@@ -410,6 +410,10 @@ struct TransformsPage: View {
                 }.labelsHidden().frame(width: 180)
             }
             .padding(16).background(T.panel, in: RoundedRectangle(cornerRadius: 12))
+            .disabled(!enabled).opacity(enabled ? 1 : 0.5)
+
+            ContextTransformsView()
+                .disabled(!enabled).opacity(enabled ? 1 : 0.5)
 
             HStack {
                 Text("Mis transforms").font(T.serif(22)).foregroundStyle(T.text)

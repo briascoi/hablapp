@@ -2,6 +2,7 @@
 
 import Cocoa
 import SwiftUI
+import AVFoundation
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     static var shared: AppDelegate?
@@ -170,6 +171,21 @@ func snapshot(_ dir: String) {
         host.cacheDisplay(in: host.bounds, to: rep)
         try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: "\(dir)/\(name).png"))
     }
+    // Barra flotante grabando, con texto en vivo, sobre fondo claro y oscuro.
+    Flow.shared.phase = .recording(handsFree: true, command: false)
+    Flow.shared.levels = [0.2, 0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 0.4, 0.5, 0.3, 0.2]
+    Flow.shared.partial = "Hola, te escribo para confirmar la reunión del jueves a las 5 de la tarde en la oficina de Palermo"
+    for (name, bg) in [("flowbar-light", NSColor.white), ("flowbar-dark", NSColor.darkGray)] {
+        let v = NSHostingView(rootView: FlowBarView().background(Color(nsColor: bg)))
+        v.frame = NSRect(x: 0, y: 0, width: 400, height: 104)
+        w.setContentSize(v.frame.size)
+        w.contentView = v
+        RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+        let rep = v.bitmapImageRepForCachingDisplay(in: v.bounds)!
+        v.cacheDisplay(in: v.bounds, to: rep)
+        try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: "\(dir)/\(name).png"))
+    }
+    Flow.shared.phase = .idle
     for s in OnboardingView.Step.allCases {
         let v = NSHostingView(rootView: OnboardingView(start: s, preview: true))
         v.frame = NSRect(x: 0, y: 0, width: 500, height: 600)
@@ -224,6 +240,104 @@ func selfTest() {
     check("url: ruta desconocida", link("hablapp://nada") == nil)
     check("url: otro esquema", link("https://start") == nil)
 
+    // Selección contextual: servicio web > app > general; vacío desactiva sólo el transform.
+    let general = Transform(name: "General", prompt: "general")
+    let prompt = Transform(name: "Prompt", prompt: "prompt")
+    let message = Transform(name: "Mensaje", prompt: "mensaje")
+    let transforms = [general, prompt, message]
+    var ctx = Context()
+    ctx.bundle = "com.google.Chrome"
+    ctx.title = "Proyecto nuevo - ChatGPT"
+    let rules = ["web:chatgpt": prompt.id.uuidString, ctx.bundle: message.id.uuidString]
+    func resolved(_ c: Context, _ r: [String: String]) -> Transform? {
+        ContextTransforms.resolve(context: c, rules: r, transforms: transforms, general: general.id.uuidString)
+    }
+    check("contexto: servicio web gana al navegador", resolved(ctx, rules) == prompt)
+    check("contexto: ninguno web bloquea app y general", resolved(ctx, ["web:chatgpt": "", ctx.bundle: message.id.uuidString]) == nil)
+    check("contexto: sin regla web usa navegador", resolved(ctx, [ctx.bundle: message.id.uuidString]) == message)
+    check("contexto: sin reglas usa general", resolved(ctx, [:]) == general)
+    ctx.title = "Documento de trabajo"
+    check("contexto: otra pestaña no usa regla de ChatGPT", resolved(ctx, rules) == message)
+    ctx.bundle = "com.apple.TextEdit"
+    ctx.title = "Notas sobre ChatGPT"
+    check("contexto: título de otra app no es un servicio web", ContextTransforms.webTarget(ctx) == nil)
+    ctx.bundle = "com.anthropic.claudefordesktop"
+    check("contexto: Claude nativo", resolved(ctx, [ctx.bundle: prompt.id.uuidString]) == prompt)
+    check("contexto: ninguno nativo bloquea general", resolved(ctx, [ctx.bundle: ""]) == nil)
+    check("contexto: transform eliminado no ejecuta otro", resolved(ctx, [ctx.bundle: UUID().uuidString]) == nil)
+    ctx.bundle = "com.apple.Safari"
+    ctx.title = "(2) WhatsApp"
+    check("contexto: WhatsApp web", ContextTransforms.webTarget(ctx) == "web:whatsapp")
+    ctx.title = "Claude | Proyecto"
+    check("contexto: Claude web", ContextTransforms.webTarget(ctx) == "web:claude")
+    ctx.title = "Claudette"
+    check("contexto: no coincide nombre parcial", ContextTransforms.webTarget(ctx) == nil)
+    ctx.title = "¿Cómo usar ChatGPT? - Buscador"
+    check("contexto: mención en otra página no activa ChatGPT", ContextTransforms.webTarget(ctx) == nil)
+    ctx.title = "Claude - ChatGPT"
+    check("contexto: título ambiguo no activa un servicio", ContextTransforms.webTarget(ctx) == nil)
+    ctx.title = "Título de conversación sin marca"
+    ctx.documentURL = URL(string: "https://chatgpt.com/c/123")
+    check("contexto: URL reconoce ChatGPT sin marca en título", ContextTransforms.webTarget(ctx) == "web:chatgpt")
+    check("contexto: regla web por URL tiene prioridad", resolved(ctx, rules) == prompt)
+    ctx.documentURL = URL(string: "https://claude.ai/chat/123")
+    check("contexto: Claude por URL", ContextTransforms.webTarget(ctx) == "web:claude")
+    ctx.documentURL = URL(string: "https://web.whatsapp.com/")
+    check("contexto: WhatsApp por URL", ContextTransforms.webTarget(ctx) == "web:whatsapp")
+    ctx.documentURL = URL(string: "https://chat.openai.com/")
+    check("contexto: dominio anterior de ChatGPT", ContextTransforms.webTarget(ctx) == "web:chatgpt")
+    ctx.title = "ChatGPT"
+    ctx.documentURL = URL(string: "https://example.com/chatgpt")
+    check("contexto: URL ajena gana a título coincidente", ContextTransforms.webTarget(ctx) == nil)
+    ctx.documentURL = URL(string: "https://chatgpt.com.example.com/")
+    check("contexto: dominio parecido no coincide", ContextTransforms.webTarget(ctx) == nil)
+    ctx.documentURL = URL(string: "file:///tmp/chatgpt.html")
+    check("contexto: documento local no es ChatGPT web", ContextTransforms.webTarget(ctx) == nil)
+    ctx.documentURL = URL(string: "https://chatgpt.com/")
+    check("contexto: interruptor desactiva todos los transforms",
+          ContextTransforms.resolve(context: ctx, rules: rules, transforms: transforms,
+                                    general: general.id.uuidString, enabled: false) == nil)
+    ctx.bundle = "com.openai.chat"
+    ctx.documentURL = nil
+    check("contexto: ChatGPT nativo", resolved(ctx, [ctx.bundle: prompt.id.uuidString]) == prompt)
+    ctx.bundle = "com.openai.codex"
+    check("contexto: ChatGPT y Codex con bundle actual", resolved(ctx, [ctx.bundle: prompt.id.uuidString]) == prompt)
+    ctx.bundle = "net.whatsapp.WhatsApp"
+    check("contexto: WhatsApp nativo", resolved(ctx, [ctx.bundle: message.id.uuidString]) == message)
+    check("contexto: sin general ni regla no transforma",
+          ContextTransforms.resolve(context: ctx, rules: [:], transforms: transforms, general: "") == nil)
+
+    // Persistencia y borrado en datos y preferencias temporales, sin tocar la configuración del usuario.
+    let testID = UUID().uuidString
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent("hablapp-selftest-" + testID)
+    let suite = "hablapp-selftest-" + testID
+    let preferences = UserDefaults(suiteName: suite)!
+    do {
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+            preferences.removePersistentDomain(forName: suite)
+        }
+        let store = Store(directory: directory, preferences: preferences)
+        check("contexto: instalación anterior sin archivo conserva reglas vacías", store.appTransforms.isEmpty)
+        store.transforms = transforms
+        store.appTransforms = ["com.openai.chat": prompt.id.uuidString, "web:claude": prompt.id.uuidString,
+                               "net.whatsapp.WhatsApp": ""]
+        preferences.set(prompt.id.uuidString, forKey: "autoTransform")
+        let reopened = Store(directory: directory, preferences: preferences)
+        check("contexto: reglas persisten al reabrir", reopened.appTransforms == store.appTransforms)
+        check("contexto: transforms conservan sus IDs al reabrir", reopened.transforms == transforms)
+        store.transforms.removeAll { $0.id == prompt.id }
+        check("contexto: borrar transform desactiva reglas que lo usaban",
+              store.appTransforms["com.openai.chat"] == "" && store.appTransforms["web:claude"] == "")
+        check("contexto: borrar transform limpia el general", preferences.string(forKey: "autoTransform") == nil)
+        check("contexto: borrar transform respeta regla Ninguno", store.appTransforms["net.whatsapp.WhatsApp"] == "")
+        let cleaned = Store(directory: directory, preferences: preferences)
+        check("contexto: limpieza persiste al reabrir", cleaned.appTransforms == store.appTransforms)
+        store.appTransforms["com.openai.chat"] = nil
+        check("contexto: quitar regla persiste herencia del general",
+              Store(directory: directory, preferences: preferences).appTransforms["com.openai.chat"] == nil)
+    }
+
     print(fails == 0 ? "selftest OK" : "selftest: \(fails) fallas")
     exit(fails == 0 ? 0 : 1)
 }
@@ -237,9 +351,27 @@ if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), i + 1 < CommandLi
 }
 if let i = CommandLine.arguments.firstIndex(of: "--transcribe"), i + 1 < CommandLine.arguments.count {
     // Depuración: transcribe un WAV con el motor elegido, imprime el texto y sale.
+    // Con --live lo pasa en tramos de 0,1 s por la transcripción en vivo (WAV de 16 kHz mono Int16) y mide el cierre.
     let url = URL(fileURLWithPath: CommandLine.arguments[i + 1])
     Task {
-        do { print(try await Transcriber.transcribe(wav: url)); exit(0) }
+        do {
+            if CommandLine.arguments.contains("--live") {
+                let file = try AVAudioFile(forReading: url, commonFormat: .pcmFormatInt16, interleaved: true)
+                let live = LiveTranscription()
+                live.onText = { print("…", $0) }
+                live.start()
+                while let b = AVAudioPCMBuffer(pcmFormat: Recorder.format, frameCapacity: 1600), (try? file.read(into: b)) != nil, b.frameLength > 0 {
+                    live.feed(b)
+                    try await Task.sleep(for: .milliseconds(100))
+                }
+                let t0 = Date()
+                let text = try await live.finish()
+                print(text, String(format: "\n(cierre: %.2f s)", Date().timeIntervalSince(t0)))
+            } else {
+                print(try await Transcriber.transcribe(wav: url))
+            }
+            exit(0)
+        }
         catch { print("Error: \(error.localizedDescription)"); exit(1) }
     }
     app.run()

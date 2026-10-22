@@ -1,5 +1,5 @@
 // La barra flotante: una píldora negra abajo al centro que nunca roba el foco.
-// Reposo: rayita. Grabando: onda en vivo. Manos libres: cancelar y parar.
+// Reposo: rayita. Grabando: onda en vivo y, encima, el texto que se va entendiendo. Manos libres: cancelar y parar.
 // Como Wispr Flow, deja pasar todos los clics: sólo los toma en manos libres, sobre sus botones.
 
 import Cocoa
@@ -7,7 +7,7 @@ import SwiftUI
 
 final class FlowBar {
     private let panel: NSPanel
-    private let size = NSSize(width: 340, height: 64)
+    private let size = NSSize(width: 400, height: 104)
     private var monitors: [Any] = []
     private var phaseSink: Any?
 
@@ -61,8 +61,15 @@ struct FlowBarView: View {
     @AppStorage("showFlowBar") var always = true
 
     var body: some View {
-        VStack {
+        VStack(spacing: 6) {
             Spacer()
+            if case .recording = flow.phase, !flow.partial.isEmpty {
+                Text(flow.partial).font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.92))
+                    .lineLimit(1).truncationMode(.head)
+                    .padding(.horizontal, 14).frame(maxWidth: 380).frame(height: 30)
+                    .background(capsule)
+                    .transition(.opacity)
+            }
             pill
                 .animation(.spring(response: 0.35, dampingFraction: 0.78), value: flow.phase)
         }

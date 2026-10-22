@@ -5,6 +5,7 @@ import Cocoa
 import Carbon
 import AVFoundation
 import FoundationModels
+import os
 
 enum Phase: Equatable {
     case idle
@@ -18,6 +19,8 @@ final class Flow: ObservableObject {
     @Published var phase: Phase = .idle
     @Published var levels: [Float] = Array(repeating: 0, count: 11)
     @Published var lastText = ""
+    @Published var partial = ""  // texto en vivo mientras dictás
+    @Published var lastTiming = ""  // cuánto tardó el último dictado tras soltar (Ajustes > Experimental)
 
     func notice(_ text: String) {
         phase = .notice(text)
@@ -174,6 +177,8 @@ final class Engine {
     private var warm: LanguageModelSession?
     private var wasMuted: Bool?
     private var pausedApps: [String] = []
+    private var live: LiveTranscription?
+    private let log = Logger(subsystem: "com.isma.hablapp", category: "dictado")
 
     private let defaults = UserDefaults.standard
     private var flow: Flow { Flow.shared }
@@ -305,9 +310,19 @@ final class Engine {
             if wasMuted == false { SystemAudio.setMuted(true) }
         }
         if defaults.bool(forKey: "pauseMedia") { pausedApps = MediaPause.pause() }
+        flow.partial = ""
+        if Transcriber.engine == "apple" {
+            let l = LiveTranscription()
+            let preview = defaults.object(forKey: "livePreview") as? Bool ?? true
+            l.onText = { if preview { Flow.shared.partial = $0 } }
+            l.start()
+            live = l
+            recorder.onBuffer = { l.feed($0) }
+        }
         do {
             try recorder.start(deviceUID: defaults.string(forKey: "mic"))
         } catch {
+            stopLive()?.cancel()
             restoreAudio()
             mode = .idle
             flow.notice("No pude usar el micrófono")
@@ -326,7 +341,7 @@ final class Engine {
             let useLLM = defaults.object(forKey: "aiFormat") as? Bool ?? true
             if mode != .command, useLLM, LLM.available {
                 warm = LanguageModelSession(instructions: Formatter.instructions(context.category, bundle: context.bundle, app: context.app))
-                warm?.prewarm()
+                warm?.prewarm(promptPrefix: Prompt(Formatter.promptContext(context)))
             }
         }
     }
@@ -343,9 +358,18 @@ final class Engine {
         pausedApps = []
     }
 
+    /// Desengancha la transcripción en vivo del grabador y la devuelve (para terminarla o cancelarla).
+    private func stopLive() -> LiveTranscription? {
+        recorder.onBuffer = nil
+        defer { live = nil }
+        return live
+    }
+
     func cancel(silent: Bool) {
         guard mode != .idle, mode != .busy else { return }
         recorder.cancel()
+        stopLive()?.cancel()
+        flow.partial = ""
         restoreAudio()
         mode = .idle
         session += 1
@@ -357,9 +381,12 @@ final class Engine {
         let m = mode
         mode = .busy
         let rec = recorder.stop()
+        let live = stopLive()
         restoreAudio()
         Sounds.play("Pop", volume: 0.3)
         guard rec.seconds > 0.25, rec.peak > 0.004 else {
+            live?.cancel()
+            flow.partial = ""
             mode = .idle
             flow.notice("No se escuchó nada")
             return
@@ -368,12 +395,21 @@ final class Engine {
         let ctx = context
         let session = warm
         warm = nil
+        let transform = ContextTransforms.resolve(context: ctx, rules: Store.shared.appTransforms,
+                                                  transforms: Store.shared.transforms,
+                                                  general: defaults.string(forKey: "autoTransform") ?? "",
+                                                  enabled: defaults.object(forKey: "transforms") as? Bool ?? true)
         Task.detached {
-            let raw: String
-            do { raw = try await Transcriber.transcribe(wav: rec.url) } catch {
-                await MainActor.run { self.done(); Flow.shared.notice("No pude transcribir") }
-                return
+            let t0 = Date()
+            let got: (String, String)
+            if let live, let r = try? await live.finish(), !r.isEmpty { got = (r, "en vivo") } else {
+                do { got = (try await Transcriber.transcribe(wav: rec.url), "archivo") } catch {
+                    await MainActor.run { self.done(); Flow.shared.notice("No pude transcribir") }
+                    return
+                }
             }
+            let (raw, how) = got
+            let t1 = Date()
             guard !raw.isEmpty else {
                 await MainActor.run { self.done(); Flow.shared.notice("No se escuchó nada") }
                 return
@@ -385,13 +421,13 @@ final class Engine {
                     self.done()
                     guard let out else { Flow.shared.notice("El modo comando necesita Apple Intelligence"); return }
                     Paster.paste(out)
+                    self.timing(t0, t1, how: how)
                     self.record(raw: raw, text: out, seconds: rec.seconds, ctx: ctx, kind: "comando")
                 }
                 return
             }
             var res = await Formatter.dictation(raw, ctx, session: session)
-            if let id = UserDefaults.standard.string(forKey: "autoTransform"),
-               let t = Store.shared.transforms.first(where: { $0.id.uuidString == id }),
+            if let t = transform,
                let out = await Formatter.transform(t, res.text) {
                 res.text = out
             }
@@ -399,6 +435,7 @@ final class Engine {
             await MainActor.run {
                 self.done()
                 Paster.paste(res2.text, pressEnter: res2.pressEnter)
+                self.timing(t0, t1, how: how)
                 Learner.watch(pasted: res2.text, app: ctx.bundle)
                 self.record(raw: raw, text: res2.text, seconds: rec.seconds, ctx: ctx, kind: "dictado")
             }
@@ -407,7 +444,16 @@ final class Engine {
 
     private func done() {
         mode = .idle
+        flow.partial = ""
         if case .processing = flow.phase { flow.phase = .idle }
+    }
+
+    /// Tiempos tras soltar: transcripción (t0→t1) y formato hasta pegar (t1→ahora).
+    private func timing(_ t0: Date, _ t1: Date, how: String) {
+        func s(_ x: Double) -> String { String(format: "%.1f s", x).replacingOccurrences(of: ".", with: ",") }
+        let tr = t1.timeIntervalSince(t0), fm = Date().timeIntervalSince(t1)
+        flow.lastTiming = "Transcripción \(s(tr)) (\(how)) · formato \(s(fm))"
+        log.info("dictado: transcripción \(tr, format: .fixed(precision: 2))s \(how, privacy: .public), formato \(fm, format: .fixed(precision: 2))s")
     }
 
     private func record(raw: String, text: String, seconds: Double, ctx: Context, kind: String) {

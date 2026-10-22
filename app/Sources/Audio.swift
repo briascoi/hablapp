@@ -1,5 +1,5 @@
 // Grabación con AVAudioEngine: niveles en vivo para la barra, conversión a 16 kHz mono
-// (formato de dictado estÃ¡ndar) y WAV en memoria para whisper.cpp. Más silenciar la salida y elegir micrófono.
+// (formato de dictado estándar) y WAV en memoria para whisper.cpp. Más silenciar la salida y elegir micrófono.
 
 import AVFoundation
 import Cocoa
@@ -13,7 +13,9 @@ final class Recorder {
     private let lock = NSLock()
     private(set) var peak: Float = 0
     var onLevel: ((Float) -> Void)?
-    private let out16k = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 16000, channels: 1, interleaved: true)!
+    var onBuffer: ((AVAudioPCMBuffer) -> Void)?  // cada tramo ya en 16 kHz, para la transcripción en vivo
+    static let format = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 16000, channels: 1, interleaved: true)!
+    private let out16k = Recorder.format
 
     func start(deviceUID: String?) throws {
         engine = AVAudioEngine()  // nuevo motor por dictado: toma bien los cambios de micrófono
@@ -57,6 +59,7 @@ final class Recorder {
         lock.lock()
         samples.append(contentsOf: UnsafeBufferPointer(start: p, count: Int(out.frameLength)))
         lock.unlock()
+        onBuffer?(out)
     }
 
     private func halt() {

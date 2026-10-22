@@ -204,6 +204,8 @@ struct SettingsView: View {
     @AppStorage("model") var model = "ggml-small.bin"
     @AppStorage("theme") var theme = "system"
     @AppStorage("showFlowBar") var showFlowBar = true
+    @AppStorage("livePreview") var livePreview = true
+    @ObservedObject var flow = Flow.shared
     @AppStorage("showInDock") var showInDock = true
     @AppStorage("sounds") var sounds = true
     @AppStorage("mute") var mute = false
@@ -315,6 +317,7 @@ struct SettingsView: View {
                     try? on ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
                 }
                 Toggler("Mostrar la barra flotante siempre", isOn: $showFlowBar)
+                Toggler("Mostrar el texto mientras hablás", detail: "Con el motor de Apple, en la barra flotante", isOn: $livePreview)
                 Toggler("Mostrar en el Dock", isOn: $showInDock).onChange(of: showInDock) { AppDelegate.applyDock() }
             }
             Text("Sonido").font(T.sans(13, .semibold)).foregroundStyle(T.text)
@@ -328,6 +331,7 @@ struct SettingsView: View {
                 Toggler("Formato con IA", detail: "Puntuación, muletillas y estilo con Apple Intelligence. Estado: \(LLM.status)", isOn: $aiFormat)
                 Toggler("Modo comando", detail: "fn + ctrl: seleccioná texto y decí qué hacer con él", isOn: $commandMode)
                 Toggler("Comando \"presioná enter\"", detail: "Si terminás el dictado con \"presioná enter\", lo envía", isOn: $pressEnter)
+                Row("Último dictado", flow.lastTiming.isEmpty ? "Todavía no dictaste nada" : flow.lastTiming) { EmptyView() }
             }
         case .about:
             AboutSection()

@@ -118,22 +118,37 @@ final class Store: ObservableObject {
     @Published var history: [Entry] = [] { didSet { save("history", history) } }
     @Published var words: [Word] = [] { didSet { save("dictionary", words) } }
     @Published var snippets: [Snippet] = [] { didSet { save("snippets", snippets) } }
-    @Published var transforms: [Transform] = [] { didSet { save("transforms", transforms) } }
+    @Published var transforms: [Transform] = [] {
+        didSet {
+            save("transforms", transforms)
+            let ids = Set(transforms.map { $0.id.uuidString })
+            // Una regla cuyo transform se borró queda en «Ninguno».
+            appTransforms = appTransforms.mapValues { ids.contains($0) ? $0 : "" }
+            if let id = preferences.string(forKey: "autoTransform"), !ids.contains(id) {
+                preferences.removeObject(forKey: "autoTransform")
+            }
+        }
+    }
     @Published var notes: [Note] = [] { didSet { save("notes", notes) } }
     @Published var suggestions: [Word] = [] { didSet { save("suggestions", suggestions) } }  // correcciones aprendidas, pendientes
     @Published var appPrompts: [String: String] = [:] { didSet { save("app-prompts", appPrompts) } }  // bundle id -> instrucciones
+    @Published var appTransforms: [String: String] = [:] { didSet { save("app-transforms", appTransforms) } } // sin clave: general; vacío: ninguno
     @AppStorage("fixes") var fixes = 0
 
     let dir: URL
+    private let preferences: UserDefaults
 
-    private init() {
+    init(directory: URL? = nil, preferences: UserDefaults = .standard) {
+        self.preferences = preferences
         // HABLAPP_DATA permite probar (snapshots) con datos de prueba sin tocar los reales.
-        dir = ProcessInfo.processInfo.environment["HABLAPP_DATA"].map { URL(fileURLWithPath: $0) }
+        dir = directory ?? ProcessInfo.processInfo.environment["HABLAPP_DATA"].map { URL(fileURLWithPath: $0) }
             ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("hablapp")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         history = load("history") ?? []
         words = load("dictionary") ?? []
         snippets = load("snippets") ?? []
+        // Cargar las reglas antes de los transforms: su didSet limpia referencias borradas y las guarda.
+        appTransforms = load("app-transforms") ?? [:]
         transforms = load("transforms") ?? Transform.defaults
         notes = load("notes") ?? []
         suggestions = load("suggestions") ?? []
@@ -157,14 +172,14 @@ final class Store: ObservableObject {
 
     // Retención del historial (Ajustes > Datos y privacidad).
     func prune() {
-        let days = UserDefaults.standard.integer(forKey: "historyDays")
+        let days = preferences.integer(forKey: "historyDays")
         guard days > 0 else { return }
         let limit = Date().addingTimeInterval(-Double(days) * 86400)
         if history.contains(where: { $0.date < limit }) { history.removeAll { $0.date < limit } }
     }
 
     func add(_ entry: Entry) {
-        if UserDefaults.standard.integer(forKey: "historyDays") < 0 {
+        if preferences.integer(forKey: "historyDays") < 0 {
             // "No guardar": igual sumamos a las estadísticas, sin el texto.
             var e = entry
             e.raw = ""; e.text = ""

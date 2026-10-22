@@ -107,7 +107,7 @@ enum Transcriber {
         return try await collect.value.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    // ponytail: se transcribe el WAV completo al soltar; streaming en vivo si la latencia lo pide.
+    /// Transcripción del WAV completo: whisper.cpp, `--transcribe` y respaldo si falla la de en vivo.
     static func transcribe(wav: URL) async throws -> String {
         if engine == "whisper" {
             if let bin = whisperBinary, whisperAvailable {
@@ -120,5 +120,84 @@ enum Transcriber {
 
     private static func err(_ m: String) -> NSError {
         NSError(domain: "hablapp", code: 2, userInfo: [NSLocalizedDescriptionKey: m])
+    }
+}
+
+// Transcripción en vivo con el motor de Apple: el audio se analiza mientras hablás, así al soltar fn
+// sólo falta cerrar el último tramo. El texto parcial (final + volátil) sale por onText en el hilo principal.
+final class LiveTranscription {
+    var onText: ((String) -> Void)?
+    private let (raw, rawIn) = AsyncStream<AVAudioPCMBuffer>.makeStream()
+    private var task: Task<String, Error>?
+
+    func start() {
+        task = Task.detached { [raw, weak self] in
+            guard let loc = await Transcriber.locale() else { throw NSError(domain: "hablapp", code: 2) }
+            try await Transcriber.ensureAppleModel()
+            let transcriber = SpeechTranscriber(locale: loc, preset: .progressiveTranscription)
+            let analyzer = SpeechAnalyzer(modules: [transcriber])
+            let vocab = Store.shared.words.map { $0.isReplacement ? $0.to : $0.from }
+            if !vocab.isEmpty {
+                let ctx = AnalysisContext()
+                ctx.contextualStrings[.general] = vocab
+                try await analyzer.setContext(ctx)
+            }
+            let src = Recorder.format
+            let dst = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber], considering: src) ?? src
+            try await analyzer.prepareToAnalyze(in: dst)
+            let converter = dst == src ? nil : AVAudioConverter(from: src, to: dst)
+
+            // Los tramos que llegaron mientras se preparaba el analizador esperan en `raw`.
+            let (inputs, inputsIn) = AsyncStream<AnalyzerInput>.makeStream()
+            let pump = Task {
+                for await b in raw {
+                    let out: AVAudioPCMBuffer? = if let converter { LiveTranscription.convert(b, converter, to: dst) } else { b }
+                    if let out { inputsIn.yield(AnalyzerInput(buffer: out)) }
+                }
+                inputsIn.finish()
+            }
+            let results = Task { () -> String in
+                var final = AttributedString()
+                for try await r in transcriber.results {
+                    if r.isFinal { final += r.text }
+                    let shown = String((r.isFinal ? final : final + r.text).characters)
+                    DispatchQueue.main.async { self?.onText?(shown) }
+                }
+                return String(final.characters)
+            }
+            try await analyzer.start(inputSequence: inputs)
+            await pump.value
+            try await analyzer.finalizeAndFinishThroughEndOfInput()
+            return try await results.value.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+    }
+
+    func feed(_ buffer: AVAudioPCMBuffer) { rawIn.yield(buffer) }
+
+    /// Cierra la entrada y espera el texto final.
+    func finish() async throws -> String {
+        rawIn.finish()
+        guard let task else { return "" }
+        return try await task.value
+    }
+
+    func cancel() {
+        onText = nil
+        rawIn.finish()
+        task?.cancel()
+    }
+
+    private static func convert(_ buf: AVAudioPCMBuffer, _ converter: AVAudioConverter, to fmt: AVAudioFormat) -> AVAudioPCMBuffer? {
+        let cap = AVAudioFrameCount(Double(buf.frameLength) * fmt.sampleRate / buf.format.sampleRate + 64)
+        guard let out = AVAudioPCMBuffer(pcmFormat: fmt, frameCapacity: cap) else { return nil }
+        var fed = false
+        var error: NSError?
+        converter.convert(to: out, error: &error) { _, status in
+            if fed { status.pointee = .noDataNow; return nil }
+            fed = true
+            status.pointee = .haveData
+            return buf
+        }
+        return out.frameLength > 0 ? out : nil
     }
 }
