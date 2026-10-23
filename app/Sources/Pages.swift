@@ -22,6 +22,7 @@ struct HomePage: View {
                 Text(name.isEmpty ? "Volvé al flow con" : "Hola \(name), volvé al flow con").font(T.serif(28)).foregroundStyle(T.text)
                 Key(text: "fn", highlight: true).scaleEffect(1.25)
             }
+            SupportReminderCard()
             HStack(alignment: .top, spacing: 24) {
                 VStack(alignment: .leading, spacing: 26) {
                     if !perms.allGood { PermissionsCard() }
@@ -40,6 +41,10 @@ struct HomePage: View {
                 }
                 StatsCard().frame(width: 250)
             }
+        }
+        .onAppear { SupportReminder.shared.refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            SupportReminder.shared.refresh()
         }
     }
 

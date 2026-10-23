@@ -393,14 +393,14 @@ struct TransformsPage: View {
                 Toggle("Activado", isOn: $enabled).toggleStyle(.switch).font(T.sans(13))
             }
             Hero(title: "Transforms funciona donde escribas",
-                 subtitle: "Seleccioná un texto en cualquier app y apretá ⌥ más un número: el LLM local lo reescribe y lo pega en su lugar.",
+                 subtitle: "Selecciona un texto en cualquier app y pulsa ⌥ más un número para aplicar el transform y pegar el resultado.",
                  colors: [Color(hex: 0x1F3B3E), Color(hex: 0x2F5D62), Color(hex: 0x6B4A33)]) {
                 HStack(spacing: 6) { HeroChip(text: "⌥ 1"); HeroChip(text: "Pulir", italic: true) }
             }
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Transform general").font(T.sans(14, .medium)).foregroundStyle(T.text)
-                    Text("Se aplica después de dictar en las apps sin regla propia. Suma unos segundos.")
+                    Text("Se aplica al dictado en las apps sin regla propia. Los transforms con IA pueden tardar unos segundos.")
                         .font(T.sans(12)).foregroundStyle(T.muted)
                 }
                 Spacer()
@@ -463,6 +463,8 @@ struct TransformEditor: View {
         Modal(title: exists ? "Editar transform" : "Nuevo transform", width: 520, onClose: onClose) {
             Field(label: "Nombre", text: $transform.name)
             Field(label: "Descripción corta", text: $transform.detail)
+            Toggler("Generar un prompt para otra IA", detail: "Convierte el texto en un encargo, sin ejecutar la tarea", isOn: Binding(
+                get: { transform.createsPrompt }, set: { transform.producesPrompt = $0 }))
             Field(label: "Instrucción para el LLM", text: $transform.prompt, multiline: true)
             HStack {
                 if exists {

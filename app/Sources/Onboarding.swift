@@ -103,7 +103,7 @@ struct OnboardingView: View {
 
     var welcome: some View {
         VStack(alignment: .leading, spacing: 22) {
-            header("Hablá en cualquier app", "Mantené fn, hablá y soltá: el texto aparece donde está el cursor, con puntuación y en el tono de cada app. Todo se procesa en tu Mac.")
+            header("Habla en cualquier app", "Mantén fn, habla y suelta: el texto aparece donde está el cursor. La voz se transcribe en tu Mac; la mejora de prompts por API es opcional.")
             HStack(spacing: 10) {
                 Key(text: "fn", highlight: true).scaleEffect(1.6).frame(width: 44)
                 Image(systemName: "arrow.right").foregroundStyle(T.muted)

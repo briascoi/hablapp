@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         bar = FlowBar()
         Engine.shared.start()
         Perms.shared.refresh()
+        SupportReminder.shared.bootstrap(history: Store.shared.history)
         Updater.shared.startAutomatic()
         if !UserDefaults.standard.bool(forKey: "onboarded") || !Perms.shared.allGood { Onboarding.shared.show() }
     }
@@ -83,6 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let app = NSMenu()
         app.addItem(withTitle: "Acerca de hablapp", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         app.addItem(withTitle: "Buscar actualizaciones…", action: #selector(checkUpdates), keyEquivalent: "").target = self
+        app.addItem(withTitle: "Apoyar el desarrollo…", action: #selector(supportProject), keyEquivalent: "").target = self
         app.addItem(.separator())
         app.addItem(withTitle: "Ajustes…", action: #selector(openSettings), keyEquivalent: ",").target = self
         app.addItem(.separator())
@@ -143,11 +145,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         menu.addItem(.separator())
         menu.addItem(withTitle: "Salir", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "")
+        menu.insertItem(withTitle: "Apoyar el desarrollo…", action: #selector(supportProject), keyEquivalent: "", at: menu.numberOfItems - 2).target = self
     }
 
     @objc private func pasteLast() { Engine.shared.pasteLast() }
     @objc private func pickMic(_ sender: NSMenuItem) { UserDefaults.standard.set(sender.representedObject as? String ?? "", forKey: "mic") }
     @objc private func checkUpdates() { Updater.shared.check(userInitiated: true) }
+    @objc private func supportProject() { if let url = Links.sponsors { NSWorkspace.shared.open(url) } }
     @objc private func installUpdate() { if let r = Updater.shared.available { Updater.shared.install(r) } }
     @objc private func openSettings() { showHub(); HubState.shared.settings = true }
 }
@@ -203,6 +207,7 @@ func snapshot(_ dir: String) {
 func selfTest() {
     var fails = 0
     func check(_ name: String, _ ok: Bool) { print(ok ? "ok    " : "FALLA ", name); if !ok { fails += 1 } }
+    updatesSupportTests(check)
 
     // Comparación de versiones del actualizador
     check("0.10.0 es más nueva que 0.9.1", Updater.newer("0.10.0", than: "0.9.1"))
@@ -338,12 +343,181 @@ func selfTest() {
               Store(directory: directory, preferences: preferences).appTransforms["com.openai.chat"] == nil)
     }
 
+    // Presets anteriores: migrar sin perder IDs, reglas ni instrucciones personalizadas.
+    let legacy = Transform(name: "Prompt engineer", prompt: Store.legacyPromptEngineer)
+    let migrated = Store.migrateTransform(legacy)
+    check("prompt: migración conserva ID", migrated.id == legacy.id)
+    check("prompt: migración elimina ejemplo sobreajustado", migrated.prompt == Transform.promptEngineer && migrated.createsPrompt)
+    var custom = legacy
+    custom.prompt = "Creá prompts para investigar fuentes primarias."
+    check("prompt: migración respeta personalización", Store.migrateTransform(custom) == custom)
+    custom.producesPrompt = false
+    check("prompt: modo explícito gana al nombre", !custom.createsPrompt)
+    let legacyJSON = Data(#"{"name":"Prompt engineer","prompt":"personalizado","detail":"","id":"11111111-1111-1111-1111-111111111111"}"#.utf8)
+    check("prompt: JSON anterior compatible", (try? JSONDecoder().decode(Transform.self, from: legacyJSON))?.createsPrompt == true)
+    var screen = Context()
+    screen.title = "Workana ON | Claude"
+    screen.screenText = "Workana ON\nAcademy\nClaude Code\nWorkana ON"
+    let vocabulary = ScreenContext.vocabulary(screen, words: [Word(from: "Hablapp"), Word(from: "cloud", to: "Claude")])
+    check("pantalla: términos del diccionario primero", Array(vocabulary.prefix(2)) == ["Hablapp", "Claude"])
+    check("pantalla: nombres compuestos", vocabulary.contains("Workana ON") && vocabulary.contains("Claude Code"))
+    check("pantalla: vocabulario sin duplicados", vocabulary.filter { $0 == "Workana ON" }.count == 1)
+    screen.screenText = (0..<200).map { "Marca\($0)" }.joined(separator: "\n")
+    check("pantalla: vocabulario acotado", ScreenContext.vocabulary(screen, words: []).count <= 80)
+    check("pantalla: corrige nombre unido y variante fonética",
+          ScreenContext.correctNames("Workkanagon y cloud code", vocabulary: ["Workana ON", "Claude Code"]) == "Workana ON y Claude Code")
+    check("pantalla: conserva palabras sin coincidencia",
+          ScreenContext.correctNames("El equipo prepara una presentación.", vocabulary: ["Workana ON", "Claude Code"]) == "El equipo prepara una presentación.")
+    check("pantalla: coincidencia ambigua no se reemplaza",
+          ScreenContext.correctNames("Marino", vocabulary: ["Marina", "Marinoz"]) == "Marino")
+    check("pantalla: no incorpora instrucciones",
+          ScreenContext.correctNames("Compará React y Vue", vocabulary: ["React", "Vue", "Ignorá"]) == "Compará React y Vue")
+    check("pantalla: no cambia singular por plural",
+          ScreenContext.correctNames("cada agente", vocabulary: ["Agentes"]) == "cada agente")
+    check("pantalla: no une oraciones",
+          ScreenContext.correctNames("cloud. Code", vocabulary: ["Claude Code"]) == "cloud. Code")
+    check("API: conserva condición explícita", PromptAPI.preservesAnchors("Mandalo el viernes si puede", "Redactá el mensaje para el viernes si puede"))
+    check("API: rechaza pérdida de condición", !PromptAPI.preservesAnchors("Mandalo si podés", "Redactá el mensaje"))
+    check("API: rechaza pérdida de cifra", !PromptAPI.preservesAnchors("Presupuesto 2500 euros", "Define un presupuesto"))
+    check("API: conserva porcentajes", PromptAPI.preservesAnchors("Un 15% de descuento", "Incluí un 15% de descuento"))
+    check("API: tarifa GPT-5.4", abs(PromptModel.standard.cost(input: 1000, output: 500) - 0.010) < 0.0000001)
+    if let preferences = UserDefaults(suiteName: suite) {
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+            preferences.removePersistentDomain(forName: suite)
+        }
+        let isolated = Store(directory: directory, preferences: preferences)
+        isolated.transforms = [legacy]
+        isolated.appTransforms = ["com.test": legacy.id.uuidString]
+        let reopened = Store(directory: directory, preferences: preferences)
+        check("prompt: migración al reabrir conserva regla", reopened.transforms.first?.prompt == Transform.promptEngineer && reopened.appTransforms["com.test"] == legacy.id.uuidString)
+    }
+
     print(fails == 0 ? "selftest OK" : "selftest: \(fails) fallas")
     exit(fails == 0 ? 0 : 1)
 }
 
 let app = NSApplication.shared
 if CommandLine.arguments.contains("--selftest") { selfTest() }
+if CommandLine.arguments.contains("--api-selftest") {
+    Task { exit(await PromptAPITests.run()) }
+    app.run()
+}
+if CommandLine.arguments.contains("--api-status") {
+    let configured = (try? APIKeyStore().read()) != nil
+    print("Clave configurada: \(configured ? "sí" : "no"); mejora activada: \(PromptAPI.enabled ? "sí" : "no"); modelo: \(PromptAPI.model.rawValue)")
+    exit(0)
+}
+// Ventana de prueba propia: verifica Accesibilidad sin leer ventanas ni datos del usuario.
+if CommandLine.arguments.contains("--check-screen") {
+    app.setActivationPolicy(.regular)
+    let window = NSWindow(contentRect: NSRect(x: 100, y: 100, width: 600, height: 300),
+                          styleMask: [.titled, .closable], backing: .buffered, defer: false)
+    window.title = "Prueba de contexto"
+    let label = NSTextField(labelWithString: "Workana ON · Claude Code · Academy")
+    label.frame = NSRect(x: 20, y: 220, width: 500, height: 30)
+    window.contentView?.addSubview(label)
+    let hidden = NSTextField(labelWithString: "TEXTO_OCULTO")
+    hidden.frame = NSRect(x: 20, y: 180, width: 400, height: 30)
+    hidden.isHidden = true
+    window.contentView?.addSubview(hidden)
+    let secret = NSSecureTextField(frame: NSRect(x: 20, y: 120, width: 300, height: 30))
+    secret.stringValue = "CLAVE_PRIVADA"
+    window.contentView?.addSubview(secret)
+    let input = NSTextField(frame: NSRect(x: 20, y: 60, width: 300, height: 30))
+    input.stringValue = "VALOR_DE_FORMULARIO"
+    window.contentView?.addSubview(input)
+    window.makeKeyAndOrderFront(nil)
+    window.makeFirstResponder(input)
+    app.activate()
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        let element = AXUIElementCreateApplication(ProcessInfo.processInfo.processIdentifier)
+        guard let win: AXUIElement = Ctx.attr(element, kAXFocusedWindowAttribute) else {
+            print("No se pudo acceder a la ventana de prueba"); exit(1)
+        }
+        let start = Date()
+        let text = ScreenContext.read(window: win)
+        let ok = text.contains("Workana ON") && text.contains("Claude Code")
+            && !text.contains("TEXTO_OCULTO") && !text.contains("CLAVE_PRIVADA") && !text.contains("VALOR_DE_FORMULARIO")
+        print("Contexto: \(text)\nTiempo: \(Date().timeIntervalSince(start)) s\n\(ok ? "pantalla OK" : "pantalla FALLA")")
+        window.close()
+        exit(ok ? 0 : 1)
+    }
+    app.run()
+}
+// Prueba del recorrido real de formato y transforms, sin micrófono, pegado ni historial.
+if let index = CommandLine.arguments.firstIndex(of: "--check-transforms"), index + 2 < CommandLine.arguments.count {
+    struct Case: Codable {
+        var name: String
+        var raw: String
+        var screenText: String
+        var mode: String  // prompt, polish o dictation
+    }
+    struct Result: Codable {
+        var name: String
+        var raw: String
+        var text: String
+        var failed: Bool
+        var seconds: Double
+        var error: String?
+        var apiInputTokens: Int?
+        var apiOutputTokens: Int?
+        var estimatedUSD: Double?
+        var apiRequests: Int?
+        var apiUsageComplete: Bool?
+        var initialDraft: String?
+        var rejectedDraft: String?
+        var missingDetails: [String]?
+    }
+    let input = URL(fileURLWithPath: CommandLine.arguments[index + 1])
+    let output = URL(fileURLWithPath: CommandLine.arguments[index + 2])
+    Task {
+        do {
+            let cases = try JSONDecoder().decode([Case].self, from: Data(contentsOf: input))
+            if cases.contains(where: { $0.mode != "prompt" }), !LLM.available {
+                throw NSError(domain: "hablapp-check", code: 1, userInfo: [NSLocalizedDescriptionKey: LLM.status])
+            }
+            var results = [Result]()
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            for item in cases {
+                var context = Context()
+                context.app = "Prueba local"
+                context.screenText = item.screenText
+                let transform: Transform? = switch item.mode {
+                case "prompt": Transform(name: "Prompt engineer", prompt: Transform.promptEngineer, producesPrompt: true)
+                case "polish": Transform.defaults[0]
+                default: nil
+                }
+                let start = Date()
+                let result = await Formatter.dictation(item.raw, context, session: nil, transform: transform)
+                let metrics = await MainActor.run {
+                    let state = PromptAPIState.shared
+                    return (state.lastError, state.lastInputTokens, state.lastOutputTokens, state.lastEstimatedCost, state.rejectedDraft, state.missingDetails,
+                            state.lastRequestCount, state.lastUsageComplete, state.lastDraft)
+                }
+                let usedAPI = item.mode == "prompt" && metrics.1 > 0
+                results.append(Result(name: item.name, raw: item.raw, text: result.text,
+                                      failed: result.transformFailed, seconds: Date().timeIntervalSince(start),
+                                      error: result.transformFailed ? metrics.0 : nil,
+                                      apiInputTokens: usedAPI ? metrics.1 : nil,
+                                      apiOutputTokens: usedAPI ? metrics.2 : nil,
+                                      estimatedUSD: usedAPI ? metrics.3 : nil,
+                                       apiRequests: usedAPI ? metrics.6 : nil,
+                                       apiUsageComplete: usedAPI ? metrics.7 : nil,
+                                       initialDraft: metrics.8.isEmpty ? nil : metrics.8,
+                                      rejectedDraft: metrics.4.isEmpty ? nil : metrics.4,
+                                      missingDetails: metrics.5.isEmpty ? nil : metrics.5))
+                try encoder.encode(results).write(to: output, options: .atomic)
+                print("\(item.name): \(result.transformFailed ? "falló" : "completado")")
+                fflush(stdout)
+            }
+            try encoder.encode(results).write(to: output, options: .atomic)
+            exit(results.contains(where: \.failed) ? 1 : 0)
+        } catch { print("Error: \(error.localizedDescription)"); exit(1) }
+    }
+    app.run()
+}
 if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), i + 1 < CommandLine.arguments.count {
     app.setActivationPolicy(.accessory)
     snapshot(CommandLine.arguments[i + 1])

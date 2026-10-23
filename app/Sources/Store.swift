@@ -91,12 +91,23 @@ struct Transform: Codable, Identifiable, Equatable {
     var name = ""
     var detail = ""
     var prompt = ""
+    var producesPrompt: Bool? = nil  // opcional para conservar los JSON anteriores
+    var createsPrompt: Bool { producesPrompt ?? (name == "Prompt engineer") }
+
+    static let promptEngineer = """
+    Convertí el dictado en instrucciones claras para otra IA. Pedí directamente la tarea original:
+    crear una presentación, investigar, comparar, programar, redactar un mensaje, etc.
+    Ordená objetivo, datos y restricciones sin inventar información ni ejecutar la tarea.
+    Conservá el destinatario sólo si el dictado pide escribirle a alguien.
+    Conservá condiciones, negaciones, cifras, plazos y el registro del dictado.
+    Entregá únicamente el prompt listo para copiar a otra IA.
+    """
 
     static let defaults = [
         Transform(name: "Pulir", detail: "Más claro y conciso",
                   prompt: "Reescribí el texto para que sea más claro y conciso, sin cambiar el significado, el idioma ni el registro."),
-        Transform(name: "Prompt engineer", detail: "Arma un prompt óptimo",
-                  prompt: "Convertí el texto en un prompt claro y completo para un asistente de IA: objetivo, contexto, restricciones y formato de salida esperado."),
+        Transform(name: "Prompt engineer", detail: "Mejora el prompt con tu propia API",
+                  prompt: promptEngineer, producesPrompt: true),
         Transform(name: "Al inglés", detail: "Traduce manteniendo el tono",
                   prompt: "Traducí el texto al inglés natural, manteniendo el tono y el formato."),
     ]
@@ -149,7 +160,8 @@ final class Store: ObservableObject {
         snippets = load("snippets") ?? []
         // Cargar las reglas antes de los transforms: su didSet limpia referencias borradas y las guarda.
         appTransforms = load("app-transforms") ?? [:]
-        transforms = load("transforms") ?? Transform.defaults
+        let saved: [Transform] = load("transforms") ?? Transform.defaults
+        transforms = saved.map(Self.migrateTransform)
         notes = load("notes") ?? []
         suggestions = load("suggestions") ?? []
         appPrompts = load("app-prompts") ?? [:]

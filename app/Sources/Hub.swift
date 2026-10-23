@@ -49,7 +49,10 @@ struct HubView: View {
                 RoundedRectangle(cornerRadius: 14).fill(T.card)
                     .overlay(RoundedRectangle(cornerRadius: 14).stroke(T.line))
                 ScrollView {
-                    page.padding(.horizontal, 40).padding(.vertical, 36).frame(maxWidth: 1000)
+                    VStack(alignment: .leading, spacing: 20) {
+                        UpdateBanner()
+                        page
+                    }.padding(.horizontal, 40).padding(.vertical, 36).frame(maxWidth: 1000)
                         .frame(maxWidth: .infinity)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -94,13 +97,14 @@ struct HubView: View {
 struct Sidebar: View {
     @ObservedObject var hub = HubState.shared
     @ObservedObject var updater = Updater.shared
+    @AppStorage("promptAPI.enabled") var promptAPI = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Image(systemName: "waveform").font(.system(size: 17, weight: .semibold))
                 Text("hablapp").font(T.sans(19, .semibold))
-                Chip(text: "Local")
+                Chip(text: promptAPI ? "Local + API" : "Local")
             }
             .foregroundStyle(T.text).padding(.leading, 8).padding(.top, 62).padding(.bottom, 20)
 
@@ -109,8 +113,8 @@ struct Sidebar: View {
             }
             Spacer()
             VStack(alignment: .leading, spacing: 6) {
-                Text("100% en tu Mac").font(T.sans(12, .semibold)).foregroundStyle(T.accent)
-                Text("Tu voz se transcribe y se formatea acá mismo. Nada sale a internet.")
+                Text(promptAPI ? "Audio siempre local" : "Dictado local").font(T.sans(12, .semibold)).foregroundStyle(T.accent)
+                Text(promptAPI ? "El texto para mejorar prompts se envía a OpenAI con tu cuenta. Tu audio queda en la Mac." : "Tu voz se transcribe en esta Mac. La mejora de prompts por API es opcional.")
                     .font(T.sans(11)).foregroundStyle(T.muted).fixedSize(horizontal: false, vertical: true)
             }
             .padding(12).frame(maxWidth: .infinity, alignment: .leading)
@@ -120,6 +124,9 @@ struct Sidebar: View {
             Divider().overlay(T.line).padding(.bottom, 6)
             item("Ajustes", "gearshape", selected: hub.settings, badge: updater.available != nil) { hub.settings = true }
             item("Atajos", "questionmark.circle", selected: false) { hub.shortcuts = true }
+            item("Apoyar el desarrollo", "heart", selected: false) {
+                if let url = Links.sponsors { NSWorkspace.shared.open(url) }
+            }
         }
         .padding(.horizontal, 12).padding(.bottom, 14)
         .frame(width: 216)
@@ -192,7 +199,7 @@ struct ShortcutsView: View {
 // MARK: ajustes
 
 struct SettingsView: View {
-    enum Section: String, CaseIterable { case general = "General", system = "Sistema", experimental = "Experimental", privacy = "Datos y privacidad", about = "Acerca de" }
+    enum Section: String, CaseIterable { case general = "General", system = "Sistema", promptAPI = "Mejora de prompts", experimental = "Experimental", privacy = "Datos y privacidad", about = "Acerca de" }
     let onClose: () -> Void
     @State var section = HubState.shared.settingsAbout ? Section.about : Section.general
 
@@ -212,6 +219,7 @@ struct SettingsView: View {
     @AppStorage("commandMode") var commandMode = true
     @AppStorage("pressEnter") var pressEnter = false
     @AppStorage("aiFormat") var aiFormat = true
+    @AppStorage("screenContext") var screenContext = true
     @AppStorage("historyDays") var historyDays = 0
     @State var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State var confirmClear = false
@@ -263,6 +271,7 @@ struct SettingsView: View {
         switch s {
         case .general: "slider.horizontal.3"
         case .system: "laptopcomputer"
+        case .promptAPI: "wand.and.stars"
         case .experimental: "flask"
         case .privacy: "lock.shield"
         case .about: "info.circle"
@@ -333,11 +342,14 @@ struct SettingsView: View {
                 Toggler("Comando \"presioná enter\"", detail: "Si terminás el dictado con \"presioná enter\", lo envía", isOn: $pressEnter)
                 Row("Último dictado", flow.lastTiming.isEmpty ? "Todavía no dictaste nada" : flow.lastTiming) { EmptyView() }
             }
+        case .promptAPI:
+            PromptAPISettings()
         case .about:
             AboutSection()
         case .privacy:
             Group_ {
-                Row("Dónde se procesa tu voz", "En esta Mac: el motor de voz transcribe y Apple Intelligence formatea. Nada sale a internet.") { EmptyView() }
+                Row("Dónde se procesa tu voz", "El audio se transcribe en esta Mac. El formato habitual usa Apple Intelligence. Si activas la mejora de prompts por API, ese texto y las instrucciones del transform se envían a OpenAI con tu cuenta.") { EmptyView() }
+                Toggler("Usar el texto de la ventana activa", detail: "Ayuda a reconocer nombres y términos. Lectura local mediante Accesibilidad, sin capturas ni guardar el contexto en el historial.", isOn: $screenContext)
                 Row("Guardar historial", "Las estadísticas se guardan igual") {
                     Picker("", selection: $historyDays) {
                         Text("Siempre").tag(0); Text("30 días").tag(30); Text("7 días").tag(7); Text("No guardar").tag(-1)

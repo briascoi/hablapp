@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>hablapp: dicta en cualquier app de tu Mac</title>
-<meta name="description" content="hablapp convierte tu voz en texto en cualquier app de tu Mac. Gratis, privado y sin nube. Código abierto.">
+<meta name="description" content="hablapp convierte tu voz en texto en cualquier app de tu Mac. Transcripción local y código abierto. Mejora opcional de prompts con tu propia API.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" type="image/png" href="favicon.png">
 <meta property="og:title" content="hablapp">
-<meta property="og:description" content="Dicta en cualquier app de tu Mac. Gratis, privado y sin nube.">
+<meta property="og:description" content="Dicta en cualquier app de tu Mac. Transcripción local, gratis y de código abierto.">
 <meta property="og:image" content="https://briascoi.github.io/hablapp/icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -23,12 +23,12 @@
   <div>
     <img class="icon" src="icon.png" alt="Ícono de hablapp" width="96" height="96">
     <h1>Dicta en cualquier app de tu Mac.</h1>
-    <p class="lead">Gratis, privado y sin nube. Mantén <kbd>fn</kbd>, habla y suelta: el texto aparece donde está el cursor, con puntuación y en el tono de cada app.</p>
+    <p class="lead">Tu voz se transcribe en tu Mac. Mantén <kbd>fn</kbd>, habla y suelta: el texto aparece donde está el cursor, con puntuación y en el tono de cada app.</p>
     <div class="cta">
       <a class="btn" href="https://github.com/briascoi/hablapp/releases/latest/download/hablapp.zip">Descargar para Mac</a>
       <a class="btn soft" href="https://github.com/briascoi/hablapp">Ver el código</a>
     </div>
-    <p class="small">macOS 26 · Apple Silicon · Código abierto</p>
+    <p class="small">Versión 0.4.0 · macOS 26 · Apple Silicon · Gratis y de código abierto</p>
   </div>
   <img class="shot" src="img/home.jpg" alt="Pantalla principal de hablapp con el historial de dictados y las estadísticas" width="1100" height="764">
 </header>
@@ -62,10 +62,12 @@
 
 <section id="privacidad">
   <div class="card priv">
-    <span class="badge">100% en tu Mac</span>
+    <span class="badge">Transcripción local</span>
     <h2 style="margin-top:14px">Tu voz no sale de tu Mac</h2>
-    <p>La transcripción se hace en el equipo, con el motor de voz de Apple (o whisper.cpp si lo prefieres), y el formato con inteligencia artificial usa Apple Intelligence, también en el equipo. No hay cuentas ni analítica.</p>
-    <p style="margin:0">La única conexión a internet es la búsqueda de actualizaciones en GitHub. Y como el código es abierto, puedes comprobarlo tú mismo.</p>
+    <p>La transcripción se hace en el equipo, con el motor de voz de Apple (o whisper.cpp si lo prefieres). El formato y los transforms locales usan Apple Intelligence. No necesitas una cuenta para dictar y no hay analítica.</p>
+    <p>La mejora de prompts con OpenAI es opcional y viene desactivada. Si la activas, se envían el texto del pedido, las condiciones que debe conservar y las instrucciones del transform con tu propia clave. No se envían audio, capturas, historial ni el texto completo de la ventana. La clave se guarda en el Llavero de macOS y el consumo se cobra en tu cuenta de API.</p>
+    <p>El contexto de pantalla usa Accesibilidad para reconocer nombres y términos. No toma capturas ni guarda el texto de la ventana en el historial. Puedes desactivarlo en Ajustes › Datos y privacidad.</p>
+    <p style="margin:0">Hablapp también se conecta a GitHub para consultar y descargar actualizaciones. Puedes revisar el código y los <a href="https://github.com/briascoi/hablapp#privacidad">detalles de privacidad</a>.</p>
   </div>
 </section>
 
@@ -81,7 +83,7 @@
         <li>Ve a Ajustes del Sistema › Privacidad y seguridad y pulsa <strong>Abrir igualmente</strong>.</li>
         <li>Concede los permisos de <strong>Micrófono</strong> y <strong>Accesibilidad</strong> cuando los pida.</li>
       </ol>
-      <p class="small">Las actualizaciones siguientes son automáticas.</p>
+      <p class="small">La búsqueda de actualizaciones viene activada. La app avisa cuando hay una versión nueva; tú decides cuándo instalarla y reiniciar.</p>
     </div>
     <img class="shot" src="img/accesibilidad.jpg" alt="Pantalla de bienvenida de hablapp pidiendo el permiso de Accesibilidad" width="709" height="900" loading="lazy">
   </div>
@@ -91,7 +93,7 @@
   <h2>Apoyar el proyecto</h2>
   <p class="muted">hablapp es gratis y lo seguirá siendo. Si te ahorra tiempo y quieres ayudar a que siga creciendo:</p>
   <div class="cta">
-    <!-- <a class="btn" href="https://github.com/sponsors/briascoi">GitHub Sponsors</a> (pendiente de aprobación) -->
+    <a class="btn" href="https://github.com/sponsors/briascoi">GitHub Sponsors</a>
     <a class="btn" href="https://cafecito.app/briascoi">Invítame un cafecito</a>
   </div>
 </section>
@@ -104,7 +106,8 @@
   <h2>Preguntas frecuentes</h2>
   <details><summary>¿Es gratis?</summary><p>Sí. hablapp es gratis y de código abierto, con licencia MIT.</p></details>
   <details><summary>¿Por qué pide el permiso de Accesibilidad?</summary><p>Para detectar la tecla fn, leer el contexto del cursor y pegar el texto en la app que estés usando. Sin ese permiso no puede escribir por ti.</p></details>
-  <details><summary>¿Funciona sin Apple Intelligence?</summary><p>Sí. La transcripción no la necesita. Solo el formato con inteligencia artificial depende de ella, y sin eso sigues dictando con normalidad.</p></details>
+  <details><summary>¿Funciona sin Apple Intelligence?</summary><p>Sí. La transcripción no la necesita. El formato y los transforms locales dependen de ella. La mejora opcional de prompts utiliza tu cuenta de API de OpenAI.</p></details>
+  <details><summary>¿Cómo activo la mejora de prompts?</summary><p>En Ajustes › Mejora de prompts, añade tu clave de API de OpenAI y pulsa Guardar y activar. Después utiliza el transform Prompt engineer. Cada mejora realiza una reescritura y una revisión independiente; si falla o no supera los controles, se conserva el dictado. Tu suscripción a ChatGPT no incluye consumo de API.</p></details>
   <details><summary>¿Funciona en Macs con Intel?</summary><p>No. hablapp requiere macOS 26 y un Mac con Apple Silicon.</p></details>
 </section>
 </div>

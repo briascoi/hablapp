@@ -25,11 +25,11 @@ enum Transcriber {
         whisperBinary != nil && !((try? FileManager.default.contentsOfDirectory(atPath: modelsDir().path)) ?? []).filter { $0.hasPrefix("ggml-") }.isEmpty
     }
 
-    static func whisper(_ wav: URL, binary: String) -> String {
+    static func whisper(_ wav: URL, binary: String, vocabulary: [String] = []) -> String {
         let d = UserDefaults.standard
         let model = modelsDir().appendingPathComponent(d.string(forKey: "model") ?? "ggml-small.bin").path
         var args = ["-m", model, "-l", d.string(forKey: "language") ?? "es", "-nt", "-np", "-f", wav.path]
-        let vocab = Store.shared.words.map { $0.isReplacement ? $0.to : $0.from }
+        let vocab = vocabulary
         if !vocab.isEmpty { args += ["--prompt", vocab.joined(separator: ", ")] }
         let p = Process()
         p.executableURL = URL(fileURLWithPath: binary)
@@ -77,13 +77,14 @@ enum Transcriber {
         if let req = try await AssetInventory.assetInstallationRequest(supporting: [t]) { try await req.downloadAndInstall() }
     }
 
-    static func apple(_ wav: URL) async throws -> String {
+    static func apple(_ wav: URL, vocabulary: [String] = []) async throws -> String {
         guard let loc = await locale() else { throw err("Apple no soporta ese idioma") }
         try await ensureAppleModel()
         let transcriber = appleTranscriber(loc)
         let analyzer = SpeechAnalyzer(modules: [transcriber])
-        // Vocabulario del Diccionario como contexto del reconocedor.
-        let vocab = Store.shared.words.map { $0.isReplacement ? $0.to : $0.from }
+        // SpeechTranscriber actualmente ignora contextualStrings (Apple, foro 811083).
+        // La corrección con nombres visibles se aplica en Formatter; Whisper sí usa su --prompt.
+        let vocab = vocabulary
         if !vocab.isEmpty {
             let ctx = AnalysisContext()
             ctx.contextualStrings[.general] = vocab
@@ -108,14 +109,15 @@ enum Transcriber {
     }
 
     /// Transcripción del WAV completo: whisper.cpp, `--transcribe` y respaldo si falla la de en vivo.
-    static func transcribe(wav: URL) async throws -> String {
+    static func transcribe(wav: URL, vocabulary: [String]? = nil) async throws -> String {
+        let vocabulary = vocabulary ?? ScreenContext.vocabulary(Context(), words: Store.shared.words)
         if engine == "whisper" {
             if let bin = whisperBinary, whisperAvailable {
-                return whisper(wav, binary: bin)
+                return whisper(wav, binary: bin, vocabulary: vocabulary)
             }
             await MainActor.run { Flow.shared.notice("whisper.cpp no está instalado, uso el motor de Apple") }
         }
-        return try await apple(wav)
+        return try await apple(wav, vocabulary: vocabulary)
     }
 
     private static func err(_ m: String) -> NSError {
@@ -130,13 +132,14 @@ final class LiveTranscription {
     private let (raw, rawIn) = AsyncStream<AVAudioPCMBuffer>.makeStream()
     private var task: Task<String, Error>?
 
-    func start() {
+    func start(vocabulary: [String]? = nil) {
+        let vocabulary = vocabulary ?? ScreenContext.vocabulary(Context(), words: Store.shared.words)
         task = Task.detached { [raw, weak self] in
             guard let loc = await Transcriber.locale() else { throw NSError(domain: "hablapp", code: 2) }
             try await Transcriber.ensureAppleModel()
             let transcriber = SpeechTranscriber(locale: loc, preset: .progressiveTranscription)
             let analyzer = SpeechAnalyzer(modules: [transcriber])
-            let vocab = Store.shared.words.map { $0.isReplacement ? $0.to : $0.from }
+            let vocab = vocabulary
             if !vocab.isEmpty {
                 let ctx = AnalysisContext()
                 ctx.contextualStrings[.general] = vocab

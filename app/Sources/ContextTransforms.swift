@@ -147,7 +147,7 @@ struct ContextTransformsView: View {
                     }.padding(14)
                 }
             }
-            Text("La regla de la app reemplaza al transform general. En el navegador, el servicio tiene prioridad: se reconoce por la dirección de la página cuando está disponible o por su nombre en el título de la pestaña. Si no se reconoce, se usa la regla del navegador o el general. «Ninguno» conserva el formato habitual del dictado. Requiere Apple Intelligence.")
+            Text("La regla de la app reemplaza al transform general. En el navegador, el servicio tiene prioridad. «Ninguno» conserva el formato habitual del dictado. Prompt engineer requiere activar tu propia API en Ajustes › Mejora de prompts. Sin activarla, el dictado sigue usando el formato local. Los otros transforms usan Apple Intelligence.")
                 .font(T.sans(12)).foregroundStyle(T.muted).fixedSize(horizontal: false, vertical: true)
         }
     }

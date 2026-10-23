@@ -12,8 +12,7 @@ enum Links {
     static let github = URL(string: "https://github.com/\(repo)")!
     static let issues = URL(string: "https://github.com/\(repo)/issues/new")!
     static let license = URL(string: "https://github.com/\(repo)/blob/main/LICENSE")!
-    // Donaciones: nil oculta el botón. Sponsors pendiente de aprobación (activar también en docs/index.html, README y .github/FUNDING.yml).
-    static let sponsors: URL? = nil   // https://github.com/sponsors/briascoi
+    static let sponsors: URL? = URL(string: "https://github.com/sponsors/briascoi")
     static let cafecito: URL? = URL(string: "https://cafecito.app/briascoi")
     static let personalSite: URL? = URL(string: "https://ismaelbriasco.com")
     static let linkedin: URL? = URL(string: "https://www.linkedin.com/in/briascoi")
@@ -41,6 +40,27 @@ final class Updater: ObservableObject {
     @Published var status = ""
 
     private var timer: Timer?
+    private var wakeObserver: NSObjectProtocol?
+    private let preferences: UserDefaults
+    private let fetch: () async throws -> Release
+
+    init(preferences: UserDefaults = .standard, fetch: (() async throws -> Release)? = nil) {
+        self.preferences = preferences
+        self.fetch = fetch ?? Self.fetchLatest
+        // Un valor guardado por la persona siempre tiene prioridad sobre el predeterminado.
+        preferences.register(defaults: ["autoUpdate": true])
+    }
+
+    deinit {
+        timer?.invalidate()
+        if let wakeObserver { NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver) }
+    }
+
+    static func automaticCheckDue(preferences: UserDefaults, now: Date = Date()) -> Bool {
+        guard preferences.object(forKey: "autoUpdate") as? Bool ?? true else { return false }
+        guard let last = preferences.object(forKey: "lastUpdateAttempt") as? Date else { return true }
+        return now.timeIntervalSince(last) >= 24 * 3600 || last > now
+    }
 
     // MARK: comprobación
 
@@ -51,33 +71,42 @@ final class Updater: ObservableObject {
 
     /// Chequeo al iniciar (con 10 s de demora) y cada 24 h.
     func startAutomatic() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [self] in check(userInitiated: false) }
-        timer = Timer.scheduledTimer(withTimeInterval: 24 * 3600, repeats: true) { [self] _ in
-            self.check(userInitiated: false)
+        guard timer == nil else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in self?.check(userInitiated: false) }
+        timer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
+            self?.check(userInitiated: false)
+        }
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.check(userInitiated: false)
         }
     }
 
     func check(userInitiated: Bool) {
-        if !userInitiated && !(UserDefaults.standard.object(forKey: "autoUpdate") as? Bool ?? true) { return }
+        if !userInitiated && !Self.automaticCheckDue(preferences: preferences) { return }
         guard !busy else { return }
         busy = true
+        preferences.set(Date(), forKey: "lastUpdateAttempt")
         if userInitiated { status = "Buscando…" }
         Task { @MainActor in
-            defer { busy = false }
             do {
-                let r = try await Self.fetchLatest()
-                UserDefaults.standard.set(Date(), forKey: "lastUpdateCheck")
+                let r = try await fetch()
+                preferences.set(Date(), forKey: "lastUpdateCheck")
+                // Liberar antes de mostrar el diálogo: instalar también comprueba busy.
+                busy = false
                 if Self.newer(r.version, than: AppInfo.version) {
                     available = r
                     status = "Hay una versión nueva: \(r.version)"
                     if userInitiated { askToInstall(r) }
                 } else {
                     available = nil
-                    status = "Tenés la última versión (\(AppInfo.version))"
-                    if userInitiated { notify("Tenés la última versión", "hablapp \(AppInfo.version) está al día.") }
+                    status = "Tienes la última versión (\(AppInfo.version))"
+                    if userInitiated { notify("Tienes la última versión", "hablapp \(AppInfo.version) está al día.") }
                 }
             } catch {
-                status = ""
+                busy = false
+                status = "No se pudo comprobar la última versión"
                 if userInitiated { notify("No se pudo buscar actualizaciones", error.localizedDescription) }
             }
         }
@@ -118,7 +147,7 @@ final class Updater: ObservableObject {
     private func askToInstall(_ r: Release) {
         let a = NSAlert()
         a.messageText = "Hay una versión nueva: \(r.version)"
-        a.informativeText = "Tenés la \(AppInfo.version). hablapp se reinicia al actualizar."
+        a.informativeText = "Tienes la \(AppInfo.version). hablapp se reinicia al actualizar."
         a.addButton(withTitle: "Actualizar y reiniciar")
         a.addButton(withTitle: "Más tarde")
         NSApp.activate()
@@ -129,6 +158,10 @@ final class Updater: ObservableObject {
 
     func install(_ r: Release) {
         guard !busy else { return }
+        guard Flow.shared.phase == .idle else {
+            notify("Termina el dictado antes de actualizar", "Podrás actualizar cuando hablapp termine de procesar tu texto.")
+            return
+        }
         let bundle = Bundle.main.bundleURL
         // Si no podemos escribir en la carpeta de la app, se actualiza a mano desde la página.
         guard let zip = r.zip, FileManager.default.isWritableFile(atPath: bundle.deletingLastPathComponent().path) else {
@@ -258,7 +291,7 @@ struct AboutSection: View {
             }
             Spacer()
             if let r = up.available {
-                DarkButton("Actualizar y reiniciar") { up.install(r) }
+                DarkButton(up.busy ? "Actualizando…" : "Actualizar y reiniciar") { up.install(r) }.disabled(up.busy)
             } else {
                 SoftButton(up.busy ? "Buscando…" : "Buscar actualizaciones") { up.check(userInitiated: true) }.disabled(up.busy)
             }
@@ -268,13 +301,18 @@ struct AboutSection: View {
                 Row("Novedades de \(r.version)", r.notes) { EmptyView() }
             }
             Toggler("Buscar actualizaciones automáticamente", isOn: $autoUpdate)
+                .onChange(of: autoUpdate) { _, enabled in if enabled { up.check(userInitiated: false) } }
+            Text("Se comprueba al abrir la app o al reactivar el Mac, como máximo una vez al día. Tú decides cuándo instalar y reiniciar.")
+                .font(T.sans(12)).foregroundStyle(T.muted).padding(12)
         }
 
         if Links.sponsors != nil || Links.cafecito != nil {
-            Text("Apoyá hablapp").font(T.sans(13, .semibold)).foregroundStyle(T.text)
+            Text("Apoyar hablapp").font(T.sans(13, .semibold)).foregroundStyle(T.text)
+            Text(SupportReminder.message).font(T.sans(13)).foregroundStyle(T.muted)
             Group_ {
                 if let u = Links.sponsors { linkRow("GitHub Sponsors", "Un aporte mensual o único", u) }
-                if let u = Links.cafecito { linkRow("Cafecito", "Invitame un café", u) }
+                if let u = Links.cafecito { linkRow("Cafecito", "Invítame un café", u) }
+                SupportReminderToggle()
             }
         }
 

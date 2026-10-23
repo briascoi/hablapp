@@ -8,6 +8,7 @@ struct Context {
     var app = "", bundle = "", title = "", before = "", selected = "", after = ""
     var documentURL: URL?
     var category: Category = .other
+    var screenText = ""  // efímero: nunca se guarda en Entry
 }
 
 enum Ctx {
@@ -16,6 +17,8 @@ enum Ctx {
         let system = AXUIElementCreateSystemWide()
         AXUIElementSetMessagingTimeout(system, 0.25)  // apps colgadas no frenan el dictado
         let front = NSWorkspace.shared.frontmostApplication
+        let focused: AXUIElement? = attr(system, kAXFocusedUIElementAttribute)
+        if let focused, ScreenContext.isSecure(focused) { return c }
         c.app = front?.localizedName ?? ""
         c.bundle = front?.bundleIdentifier ?? ""
         if let pid = front?.processIdentifier {
@@ -23,6 +26,7 @@ enum Ctx {
             AXUIElementSetMessagingTimeout(appEl, 0.25)
             if let win: AXUIElement = attr(appEl, kAXFocusedWindowAttribute) {
                 c.title = attr(win, kAXTitleAttribute) ?? ""
+                if ScreenContext.enabled { c.screenText = ScreenContext.read(window: win) }
                 if ContextTransforms.browsers.contains(c.bundle) {
                     if let document: String = attr(win, kAXDocumentAttribute) {
                         c.documentURL = URL(string: document)
@@ -38,14 +42,14 @@ enum Ctx {
             }
         }
         c.category = category(bundle: c.bundle, title: c.title)
-        guard let el: AXUIElement = attr(system, kAXFocusedUIElementAttribute),
+        guard let el = focused,
               let text: String = attr(el, kAXValueAttribute) else { return c }
         let ns = text as NSString
         var r = CFRange(location: ns.length, length: 0)
         if let range: AXValue = attr(el, kAXSelectedTextRangeAttribute) { AXValueGetValue(range, .cfRange, &r) }
         let start = min(max(r.location, 0), ns.length), end = min(start + max(r.length, 0), ns.length)
         c.before = String(ns.substring(to: start).suffix(500))
-        c.selected = ns.substring(with: NSRange(location: start, length: end - start))
+        c.selected = String(ns.substring(with: NSRange(location: start, length: end - start)).prefix(1000))
         c.after = String(ns.substring(from: end).prefix(500))
         return c
     }
@@ -166,9 +170,10 @@ enum Formatter {
     struct Result {
         var text: String
         var pressEnter = false
+        var transformFailed = false
     }
 
-    static func dictation(_ raw: String, _ c: Context, session: LanguageModelSession?) async -> Result {
+    static func dictation(_ raw: String, _ c: Context, session: LanguageModelSession?, transform: Transform? = nil) async -> Result {
         var raw = raw
         var res = Result(text: raw)
 
@@ -181,21 +186,45 @@ enum Formatter {
             }
         }
 
-        // Snippet dicho solo: se pega el texto guardado, sin pasar por el LLM.
+        // Snippet dicho solo: evita el corrector; conserva el transform automático si está asignado.
         if let s = Store.shared.snippets.first(where: { norm($0.trigger) == norm(raw) }) {
             res.text = s.text
+            if let transform {
+                if let output = await self.transform(transform, s.text, context: c), !output.isEmpty {
+                    res.text = output
+                } else {
+                    res.transformFailed = true
+                    res.pressEnter = false
+                }
+            }
             return res
         }
 
         var text = raw
         let useLLM = UserDefaults.standard.object(forKey: "aiFormat") as? Bool ?? true
-        if useLLM, LLM.available, !raw.isEmpty {
+        if let transform, !raw.isEmpty {
+            // Un solo encargo al modelo. El corrector previo podía cambiar el objetivo y perder condiciones.
+            let input = applySnippets(applyDictionary(raw))
+            if let output = await self.transform(transform, input, context: c), !output.isEmpty {
+                text = output
+            } else {
+                text = input
+                res.transformFailed = true
+                res.pressEnter = false
+            }
+        } else if useLLM, LLM.available, !raw.isEmpty {
+            let corrected = contextualNames(raw, c)
             let s = session ?? LanguageModelSession(instructions: instructions(c.category, bundle: c.bundle, app: c.app))
-            if let out = await LLM.run(s, promptContext(c) + "\nDictado crudo: «\(raw)»"), !out.isEmpty { text = out }
+            text = corrected
+            if let out = await LLM.run(s, promptContext(c) + "\nDictado crudo: «\(corrected)»"), !out.isEmpty { text = out }
+        } else {
+            text = contextualNames(raw, c)
         }
 
-        text = applyDictionary(text)
-        text = applySnippets(text)
+        if transform == nil {
+            text = applyDictionary(text)
+            text = applySnippets(text)
+        }
         if let last = c.before.last, !last.isWhitespace, c.selected.isEmpty, !text.isEmpty { text = " " + text }
         res.text = text
         return res
@@ -221,10 +250,41 @@ enum Formatter {
         return await LLM.run(s, "Instrucción: \(instruction)\n\nTexto:\n\(selection)", timeout: 15)
     }
 
-    static func transform(_ t: Transform, _ text: String) async -> String? {
+    static func transform(_ t: Transform, _ text: String, context: Context = Context()) async -> String? {
+        let input = contextualNames(text, context)
+        if t.createsPrompt {
+            await MainActor.run { PromptAPIState.shared.beginAttempt() }
+            do {
+                guard PromptAPI.enabled, let key = try APIKeyStore().read() else { throw PromptAPIError.notConfigured }
+                let result = try await PromptAPI.improve(input, preferences: t.prompt, key: key, model: PromptAPI.model)
+                await MainActor.run { PromptAPIState.shared.record(result) }
+                return result.text
+            } catch {
+                await MainActor.run {
+                    let state = PromptAPIState.shared
+                    if let rejection = error as? PromptPreservationError {
+                        state.record(rejection.result)
+                        state.rejectedDraft = rejection.result.text
+                        state.missingDetails = rejection.missingDetails
+                    }
+                    state.lastError = error.localizedDescription
+                }
+                return nil
+            }
+        }
         guard LLM.available else { return nil }
-        let s = LanguageModelSession(instructions: t.prompt + "\nDevolvé sólo el texto resultante, sin comillas ni explicaciones.")
-        return await LLM.run(s, text, timeout: 15)
+        let rules = """
+        Conservá el registro, datos, plazos, negaciones y condiciones del dictado. Conservá el idioma salvo que el transform pida traducirlo. No inventes información.
+        Mantené los pronombres y conjugaciones originales: podés sigue podés, puedes sigue puedes.
+        Devolvé sólo el texto resultante, sin comillas ni explicaciones.
+        """
+        let s = LanguageModelSession(instructions: t.prompt + "\n" + rules)
+        return await LLM.run(s, input, timeout: 15)
+    }
+
+    static func contextualNames(_ text: String, _ context: Context) -> String {
+        guard ScreenContext.enabled else { return text }
+        return ScreenContext.correctNames(text, vocabulary: ScreenContext.vocabulary(context, words: Store.shared.words))
     }
 
     static func norm(_ s: String) -> String {

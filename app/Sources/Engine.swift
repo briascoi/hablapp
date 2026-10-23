@@ -311,11 +311,11 @@ final class Engine {
         }
         if defaults.bool(forKey: "pauseMedia") { pausedApps = MediaPause.pause() }
         flow.partial = ""
+        warm = nil
         if Transcriber.engine == "apple" {
             let l = LiveTranscription()
             let preview = defaults.object(forKey: "livePreview") as? Bool ?? true
             l.onText = { if preview { Flow.shared.partial = $0 } }
-            l.start()
             live = l
             recorder.onBuffer = { l.feed($0) }
         }
@@ -328,6 +328,10 @@ final class Engine {
             flow.notice("No pude usar el micrófono")
             return
         }
+        // El WAV y la cola del vivo ya reciben audio mientras se lee la ventana destino.
+        // Capturar antes de abrir la barra, para conservar el foco de la app donde se va a pegar.
+        context = Ctx.read()
+        live?.start(vocabulary: ScreenContext.vocabulary(context, words: Store.shared.words))
         flow.levels = Array(repeating: 0, count: flow.levels.count)
         if m == .handsFree { show() } else {
             // Si en 150 ms sigue apretado, mostramos barra y sonido: los toques al pasar no hacen ruido.
@@ -336,10 +340,16 @@ final class Engine {
                 if id == session, mode == .ptt || mode == .command { show() }
             }
         }
+        let recordingID = session
         DispatchQueue.main.async { [self] in
-            context = Ctx.read()
+            guard session == recordingID, mode == .ptt || mode == .handsFree else { return }
             let useLLM = defaults.object(forKey: "aiFormat") as? Bool ?? true
-            if mode != .command, useLLM, LLM.available {
+            var transform = ContextTransforms.resolve(context: context, rules: Store.shared.appTransforms,
+                                                      transforms: Store.shared.transforms,
+                                                      general: defaults.string(forKey: "autoTransform") ?? "",
+                                                      enabled: defaults.object(forKey: "transforms") as? Bool ?? true)
+            if transform?.createsPrompt == true, !PromptAPI.enabled { transform = nil }
+            if mode != .command, transform == nil, useLLM, LLM.available {
                 warm = LanguageModelSession(instructions: Formatter.instructions(context.category, bundle: context.bundle, app: context.app))
                 warm?.prewarm(promptPrefix: Prompt(Formatter.promptContext(context)))
             }
@@ -393,17 +403,20 @@ final class Engine {
         }
         flow.phase = .processing(command: m == .command)
         let ctx = context
+        let vocabulary = ScreenContext.vocabulary(ctx, words: Store.shared.words)
         let session = warm
         warm = nil
-        let transform = ContextTransforms.resolve(context: ctx, rules: Store.shared.appTransforms,
+        var chosen = ContextTransforms.resolve(context: ctx, rules: Store.shared.appTransforms,
                                                   transforms: Store.shared.transforms,
                                                   general: defaults.string(forKey: "autoTransform") ?? "",
                                                   enabled: defaults.object(forKey: "transforms") as? Bool ?? true)
+        if chosen?.createsPrompt == true, !PromptAPI.enabled { chosen = nil }
+        let transform = chosen
         Task.detached {
             let t0 = Date()
             let got: (String, String)
             if let live, let r = try? await live.finish(), !r.isEmpty { got = (r, "en vivo") } else {
-                do { got = (try await Transcriber.transcribe(wav: rec.url), "archivo") } catch {
+                do { got = (try await Transcriber.transcribe(wav: rec.url, vocabulary: vocabulary), "archivo") } catch {
                     await MainActor.run { self.done(); Flow.shared.notice("No pude transcribir") }
                     return
                 }
@@ -426,15 +439,14 @@ final class Engine {
                 }
                 return
             }
-            var res = await Formatter.dictation(raw, ctx, session: session)
-            if let t = transform,
-               let out = await Formatter.transform(t, res.text) {
-                res.text = out
-            }
-            let res2 = res
+            let res2 = await Formatter.dictation(raw, ctx, session: session, transform: transform)
             await MainActor.run {
                 self.done()
                 Paster.paste(res2.text, pressEnter: res2.pressEnter)
+                if res2.transformFailed {
+                    let reason = transform?.createsPrompt == true ? PromptAPIState.shared.lastError : "No se pudo aplicar el transform."
+                    Flow.shared.notice(reason + " Se conservó el dictado.")
+                }
                 self.timing(t0, t1, how: how)
                 Learner.watch(pasted: res2.text, app: ctx.bundle)
                 self.record(raw: raw, text: res2.text, seconds: rec.seconds, ctx: ctx, kind: "dictado")
@@ -461,6 +473,7 @@ final class Engine {
         flow.lastText = clean
         Store.shared.add(Entry(app: ctx.app, category: ctx.category, raw: raw, text: clean,
                                words: clean.split(whereSeparator: \.isWhitespace).count, seconds: seconds, kind: kind, bundle: ctx.bundle))
+        if kind == "dictado" && !clean.isEmpty { SupportReminder.shared.recordDictation() }
     }
 
     // MARK: atajos de portapapeles y transforms
@@ -495,15 +508,19 @@ final class Engine {
         guard mode == .idle else { return }
         mode = .busy
         flow.phase = .processing(command: true)
+        let context = Ctx.read()
         Task {
             let sel = await Ctx.selection()
-            let out = sel.isEmpty ? nil : await Formatter.transform(t, sel)
+            let out = sel.isEmpty ? nil : await Formatter.transform(t, sel, context: context)
             await MainActor.run {
                 self.done()
                 if sel.isEmpty { Flow.shared.notice("Seleccioná un texto primero"); return }
-                guard let out else { Flow.shared.notice("Transforms necesita Apple Intelligence"); return }
+                guard let out, !out.isEmpty else {
+                    Flow.shared.notice(t.createsPrompt ? PromptAPIState.shared.lastError : "No se pudo aplicar el transform. Probá de nuevo")
+                    return
+                }
                 Paster.paste(out)
-                self.record(raw: sel, text: out, seconds: 0, ctx: Ctx.read(), kind: "transform")
+                self.record(raw: sel, text: out, seconds: 0, ctx: context, kind: "transform")
             }
         }
     }
