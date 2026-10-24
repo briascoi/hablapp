@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "compositions/estilo.html"
+        ],
+        "createdAt": "2026-10-24T22:17:53.049Z",
+        "reason": "agent: #root es el cuadro de video 1920x1080, el recorte es intencional"
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "compositions/privada.html"
+        ],
+        "createdAt": "2026-10-24T22:19:18.116Z",
+        "reason": "agent: la pantalla del Mac recorta las ondas a propósito (no salen del Mac)"
+      }
+    ]
+  }
+}

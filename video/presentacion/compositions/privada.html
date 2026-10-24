@@ -1,0 +1,81 @@
+<template>
+  <link rel="stylesheet" href="assets/hb.css" />
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: var(--dark); font-family: var(--sans); color: var(--dark-ink); -webkit-font-smoothing: antialiased; }
+    #p-t { position: absolute; left: 0; right: 0; top: 80px; text-align: center; font-size: 112px; line-height: 1; }
+    #p-t .word { opacity: 0; }
+    #p-badge { position: absolute; left: 0; right: 0; top: 232px; display: flex; justify-content: center; opacity: 0; }
+    #p-badge span { background: #372D48; color: #B794F6; font: 600 32px var(--sans); padding: 12px 26px; border-radius: 999px; }
+    #p-mac { position: absolute; inset: 0; }
+    #p-screen { position: absolute; left: 560px; top: 330px; width: 800px; height: 500px; border-radius: 28px; overflow: hidden; background: rgba(237,235,231,0); }
+    #p-frame { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+    .p-ring { position: absolute; left: 400px; top: 250px; width: 0; height: 0; }
+    .p-ring i { position: absolute; left: -50px; top: -50px; width: 100px; height: 100px; border-radius: 50%; border: 3px solid rgba(237,235,231,.35); display: block; }
+    #p-pd { position: absolute; left: 0; right: 0; top: 207px; height: 85px; display: grid; place-items: center; }
+    #p-pill { opacity: 0; }
+    #p-roll { position: absolute; left: 0; right: 0; top: 900px; height: 60px; overflow: hidden; text-align: center; font: 400 42px/60px var(--sans); color: rgba(237,235,231,.82); }
+    #p-roll div { position: absolute; left: 0; right: 0; top: 0; opacity: 0; }
+  </style>
+  <div data-hf-id="hf-2j0q" id="root" data-composition-id="privada" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-41sb" id="p-t" class="serif">Tu voz no sale de tu Mac</div>
+    <div data-hf-id="hf-gmkh" id="p-badge"><span data-hf-id="hf-lcjz">Transcripción local</span></div>
+
+    <div data-hf-id="hf-ywnd" id="p-mac">
+      <svg data-hf-id="hf-dnjk" id="p-frame" viewBox="0 0 1920 1080">
+        <rect data-hf-id="hf-arnc" id="p-scr" x="560" y="330" width="800" height="500" rx="28" fill="none" stroke="#EDEBE7" stroke-opacity=".55" stroke-width="4" pathLength="1" stroke-dasharray="1" />
+        <path data-hf-id="hf-53lr" id="p-base" d="M470 846 H1450 Q1450 872 1420 872 H500 Q470 872 470 846 Z" fill="none" stroke="#EDEBE7" stroke-opacity=".55" stroke-width="4" pathLength="1" stroke-dasharray="1" />
+      </svg>
+      <div data-hf-id="hf-qk4c" id="p-screen">
+        <div data-hf-id="hf-bmcj" class="p-ring"><i data-hf-id="hf-wt6k"></i></div><div data-hf-id="hf-952b" class="p-ring"><i data-hf-id="hf-zeb8"></i></div><div data-hf-id="hf-8qra" class="p-ring"><i data-hf-id="hf-y7e5"></i></div>
+        <div data-hf-id="hf-ed8k" id="p-pd"><div data-hf-id="hf-chsv" id="p-pill" class="pill"><div data-hf-id="hf-wmkr" class="wave" id="p-wave"></div></div></div>
+      </div>
+    </div>
+
+    <div data-hf-id="hf-6c89" id="p-roll">
+      <div data-hf-id="hf-72ci">Motor de voz de Apple o whisper.cpp</div>
+      <div data-hf-id="hf-akbz">No necesitas una cuenta para dictar</div>
+      <div data-hf-id="hf-3wlb">No hay analítica</div>
+    </div>
+    <div data-hf-id="hf-nhax" class="grain" style="mix-blend-mode: screen; opacity: .04"></div>
+  </div>
+  <script src="assets/hb.js"></script>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      const $ = (s) => document.querySelector(s);
+      const bars = HB.bars($("#p-wave"));
+      const rings = [...document.querySelectorAll(".p-ring i")];
+
+      // El Mac se dibuja y la píldora graba adentro.
+      tl.fromTo(["#p-scr", "#p-base"], { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.8, stagger: 0.12, ease: "power3.inOut" }, 0.05);
+      tl.fromTo("#p-pill", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1.4, duration: 0.45, ease: "back.out(1.4)", immediateRender: false }, 0.5);
+      HB.drive(tl, 0.5, 5.6, (t) => {
+        HB.setWave(bars, t + 40, Math.min(1, t / 0.2));
+        // Ondas que crecen y chocan con el borde de la pantalla: no salen.
+        rings.forEach((r, i) => {
+          const k = (t * 0.55 + i / 3) % 1;
+          r.style.transform = `scale(${1 + k * 9})`;
+          r.style.opacity = t < 0.3 ? 0 : String((1 - k) * Math.max(0, Math.min(1, (5.0 - t) / 0.3)));
+        });
+      });
+
+      tl.fromTo(HB.words($("#p-t")), { opacity: 0, scale: 1.3, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.34, stagger: 0.09, ease: "expo.out" }, 0.35);
+      tl.fromTo("#p-badge", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)", immediateRender: false }, 1.3);
+
+      // Línea rodante, una por cada dos beats.
+      const lines = [...document.querySelectorAll("#p-roll div")];
+      [2.03, 3.05, 4.07].forEach((at, i) => {
+        tl.fromTo(lines[i], { opacity: 1, y: 60 }, { y: 0, duration: 0.4, ease: "power4.out", immediateRender: false }, at);
+        if (i < 2) tl.to(lines[i], { y: -60, duration: 0.3, ease: "power3.in" }, [3.05, 4.07][i] - 0.05);
+      });
+
+      // Salida: la pantalla se enciende y la cámara entra en ella.
+      tl.to(["#p-t", "#p-badge", "#p-roll"], { opacity: 0, filter: "blur(10px)", duration: 0.25, ease: "power3.in" }, 5.25);
+      tl.to("#p-pill", { opacity: 0, scale: 1.1, duration: 0.2, ease: "power3.in" }, 5.3);
+      tl.to("#p-screen", { backgroundColor: "rgba(243,241,236,1)", duration: 0.3, ease: "power2.in" }, 5.35);
+      tl.to("#p-mac", { scale: 2.7, transformOrigin: "960px 580px", duration: 0.7, ease: "power3.in" }, 5.4);
+
+      window.__timelines["privada"] = tl;
+    })();
+  </script>
+</template>

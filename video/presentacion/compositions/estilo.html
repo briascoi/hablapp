@@ -1,0 +1,91 @@
+<template>
+  <link rel="stylesheet" href="assets/hb.css" />
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: var(--bg); font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: antialiased; }
+    .e-t { position: absolute; left: 0; right: 0; top: 70px; text-align: center; font-size: 104px; line-height: 1; }
+    .e-t .word { opacity: 0; }
+    #e-stage { position: absolute; left: 210px; right: 210px; top: 250px; height: 330px; }
+    #e-chip { position: absolute; left: 0; top: 0; opacity: 0; }
+    #e-chip span { position: absolute; left: 0; top: 0; white-space: nowrap; }
+    #e-msg { position: absolute; left: 0; top: 76px; display: flex; gap: 28px; align-items: flex-end; opacity: 0; }
+    #e-av { width: 96px; height: 96px; border-radius: 50%; background: var(--teal); color: #fff; font: 600 42px/96px var(--sans); text-align: center; flex: none; }
+    #e-bub { position: relative; background: var(--card); border: 2px solid var(--line); box-shadow: var(--shadow); border-radius: 44px 44px 44px 12px; padding: 40px 52px; font: 400 54px/1.35 var(--sans); width: 1400px; height: 236px; }
+    #e-bub p { position: absolute; left: 52px; right: 52px; top: 40px; opacity: 0; }
+    .pm { color: var(--ink); }
+    #e-cards { position: absolute; left: 210px; right: 210px; top: 680px; height: 250px; }
+    .e-card { position: absolute; top: 0; width: 480px; height: 250px; padding: 40px 44px; opacity: 0; }
+    .e-card h4 { font: 400 54px var(--serif); margin-bottom: 14px; }
+    .e-card p { font: 400 32px/1.35 var(--sans); color: var(--muted); }
+    #e-ring { position: absolute; top: -4px; left: -4px; width: 488px; height: 258px; border: 5px solid var(--accent); border-radius: 30px; opacity: 0; }
+  </style>
+  <div data-hf-id="hf-iwr5" id="root" data-composition-id="estilo" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-z3xo" id="e-t1" class="e-t serif">Más formal en el correo</div>
+    <div data-hf-id="hf-ytqw" id="e-t2" class="e-t serif">Más suelto en el chat</div>
+
+    <div data-hf-id="hf-quuz" id="e-stage">
+      <div data-hf-id="hf-gnbl" id="e-chip"><span data-hf-id="hf-31bd" class="chip" id="e-c1">Email</span><span data-hf-id="hf-3qcd" class="chip" id="e-c2" style="opacity:0">Personales</span></div>
+      <div data-hf-id="hf-7d7m" id="e-msg">
+        <div data-hf-id="hf-64ly" id="e-av">L</div>
+        <div data-hf-id="hf-lp7a" id="e-bub">
+          <p data-hf-id="hf-vob3" id="e-p1">Hola<span data-hf-id="hf-tfkc" class="pm">,</span> <span data-hf-id="hf-70j9" class="pm">¿</span>estás libre para almorzar mañana<span data-hf-id="hf-lvqt" class="pm">?</span> Hagamos a las 12 si te queda bien<span data-hf-id="hf-smya" class="pm">.</span></p>
+          <p data-hf-id="hf-quoa" id="e-p2">Hola<span data-hf-id="hf-ha90" class="pm">,</span> <span data-hf-id="hf-imqx" class="pm">¿</span>estás libre para almorzar mañana<span data-hf-id="hf-bei1" class="pm">?</span> Hagamos a las 12 si te queda bien</p>
+          <p data-hf-id="hf-nm1c" id="e-p3"><span data-hf-id="hf-oidc" class="pm">h</span>ola estás libre para almorzar mañana? <span data-hf-id="hf-0qgo" class="pm">h</span>agamos a las 12 si te queda bien</p>
+        </div>
+      </div>
+    </div>
+
+    <div data-hf-id="hf-8ngg" id="e-cards">
+      <div data-hf-id="hf-8kur" class="e-card card" style="left:0"><h4 data-hf-id="hf-6jtq">Formal</h4><p data-hf-id="hf-850k">Mayúsculas y puntuación</p></div>
+      <div data-hf-id="hf-txlk" class="e-card card" style="left:520px"><h4 data-hf-id="hf-n4ig">Casual</h4><p data-hf-id="hf-js5q">Mayúsculas y menos puntuación</p></div>
+      <div data-hf-id="hf-dj62" class="e-card card" style="left:1040px"><h4 data-hf-id="hf-dpcj">Muy casual</h4><p data-hf-id="hf-78h4">Sin mayúsculas y menos puntuación</p></div>
+      <div data-hf-id="hf-ivp9" id="e-ring"></div>
+    </div>
+    <div data-hf-id="hf-h60x" class="grain"></div>
+  </div>
+  <script src="assets/hb.js"></script>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      const $ = (s) => document.querySelector(s);
+      const ORANGE = "#F4A647", INK = "#1C1B1A";
+      const punch = (els, at, st = 0.08) => tl.fromTo(els, { opacity: 0, scale: 1.3, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, stagger: st, ease: "expo.out" }, at);
+      const out = (els, at) => tl.to(els, { opacity: 0, y: -60, filter: "blur(10px)", duration: 0.25, ease: "power3.in" }, at);
+
+      // Entrada: título, mensaje y el selector real de Estilo.
+      punch(HB.words($("#e-t1")), 0.1);
+      tl.fromTo("#e-msg", { opacity: 0, scale: 0.85, y: 60 }, { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: "back.out(1.4)", immediateRender: false }, 0.3);
+      tl.fromTo("#e-p1", { opacity: 0 }, { opacity: 1, duration: 0.2, immediateRender: false }, 0.5);
+      tl.fromTo("#e-chip", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.4, ease: "power4.out", immediateRender: false }, 0.55);
+      tl.fromTo(".e-card", { opacity: 0, rotationX: -80, transformOrigin: "50% 100%" }, { opacity: 1, rotationX: 0, duration: 0.6, stagger: 0.1, ease: "power4.out", immediateRender: false }, 0.45);
+      tl.fromTo("#e-ring", { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)", immediateRender: false }, 1.05);
+      tl.fromTo("#e-p1 .pm", { color: INK }, { color: ORANGE, duration: 0.15, stagger: 0.05, immediateRender: false }, 1.3);
+      tl.to("#e-p1 .pm", { color: INK, duration: 0.6, ease: "power2.inOut" }, 2.04);
+
+      // Cambio de estilo: el anillo viaja, el texto se reescribe.
+      function swap(at, from, to, x) {
+        tl.to("#e-ring", { x, duration: 0.42, ease: "power3.inOut" }, at - 0.2);
+        tl.to(from, { opacity: 0, filter: "blur(10px)", duration: 0.18, ease: "power3.in" }, at - 0.1);
+        tl.fromTo(to, { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power3.out", immediateRender: false }, at + 0.06);
+        tl.fromTo("#e-bub", { scale: 1 }, { scale: 1.03, duration: 0.12, yoyo: true, repeat: 1, ease: "power2.out", immediateRender: false }, at);
+      }
+
+      // 4.07: más suelto en el chat.
+      out("#e-t1 .word", 3.8);
+      punch(HB.words($("#e-t2")), 4.07);
+      tl.to("#e-c1", { opacity: 0, y: -20, duration: 0.15, ease: "power3.in" }, 3.95);
+      tl.fromTo("#e-c2", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3, ease: "power4.out", immediateRender: false }, 4.07);
+      tl.to("#e-av", { backgroundColor: "#6B4A33", duration: 0.3 }, 4.0);
+      swap(4.07, "#e-p1", "#e-p2", 520);
+
+      // 6.1: muy casual, las mayúsculas caen.
+      swap(6.1, "#e-p2", "#e-p3", 1040);
+      tl.fromTo("#e-p3 .pm", { color: ORANGE }, { color: INK, duration: 0.7, ease: "power2.inOut", immediateRender: false }, 6.5);
+
+      // Salida hacia manos libres.
+      tl.to(".e-card, #e-ring", { y: 520, duration: 0.4, stagger: 0.04, ease: "power3.in" }, 7.62);
+      tl.to(["#e-t2", "#e-stage"], { y: -620, filter: "blur(12px)", duration: 0.42, stagger: 0.04, ease: "power3.in" }, 7.66);
+
+      window.__timelines["estilo"] = tl;
+    })();
+  </script>
+</template>

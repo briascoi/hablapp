@@ -1,0 +1,69 @@
+<template>
+  <link rel="stylesheet" href="assets/hb.css" />
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: var(--fn); font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: antialiased; }
+    #r-title { position: absolute; left: 0; right: 0; top: 250px; text-align: center; font-size: 150px; line-height: 1.08; }
+    #r-title .word { opacity: 0; }
+    #r-slot { display: inline-block; position: relative; height: 1.08em; overflow: hidden; vertical-align: top; text-align: center; }
+    #r-col { display: flex; flex-direction: column; }
+    #r-col span { height: 1.08em; white-space: nowrap; }
+    #r-sub { position: absolute; left: 0; right: 0; top: 640px; text-align: center; font: 500 46px var(--sans); color: var(--fn-ink); }
+    #r-sub .word { opacity: 0; }
+    #r-live, #r-proc, #r-dash { opacity: 0; }
+    #r-wipe { position: absolute; left: 0; right: 0; top: 1080px; height: 1200px; background: var(--bg); border-radius: 80px 80px 0 0; }
+  </style>
+  <div data-hf-id="hf-1y8w" id="root" data-composition-id="revela" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-dq3g" id="r-title" class="serif">
+      <span data-hf-id="hf-ps70" class="word">Dicta</span> <span data-hf-id="hf-99ti" class="word">en</span>
+      <span data-hf-id="hf-ts5c" class="word" id="r-slot"><span data-hf-id="hf-5g3p" id="r-col"><span data-hf-id="hf-p4s9">cualquier app</span><span data-hf-id="hf-6myy">Mail</span><span data-hf-id="hf-bke7">Mensajes</span><span data-hf-id="hf-es6a">Notas</span><span data-hf-id="hf-6k6r">WhatsApp</span><span data-hf-id="hf-bo6b">Slack</span><span data-hf-id="hf-1ghg">ChatGPT</span><span data-hf-id="hf-fncj">Claude</span><span data-hf-id="hf-twst">cualquier app</span></span></span><br data-hf-id="hf-x5px" />
+      <span data-hf-id="hf-krr2" class="word">de</span> <span data-hf-id="hf-tc1q" class="word">tu</span> <span data-hf-id="hf-7gpw" class="word">Mac</span>
+    </div>
+    <div data-hf-id="hf-5l5c" id="r-sub">con puntuación y en el tono de cada app</div>
+
+    <div data-hf-id="hf-oa7t" class="ldock"><div data-hf-id="hf-sv6l" id="r-live" class="live"><span data-hf-id="hf-bfk5" id="r-livetxt"></span></div></div>
+    <div data-hf-id="hf-pz3p" class="dock">
+      <div data-hf-id="hf-370d" id="r-dash" class="dash"></div>
+      <div data-hf-id="hf-u152" id="r-rec" class="pill"><div data-hf-id="hf-ig3p" class="wave" id="r-wave"></div></div>
+      <div data-hf-id="hf-q961" id="r-proc" class="pill" style="padding:0 45px;"><div data-hf-id="hf-zx1w" class="dots"><i data-hf-id="hf-wt6k"></i><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-y7e5"></i></div></div>
+    </div>
+    <div data-hf-id="hf-9zpz" id="r-wipe"></div>
+    <div data-hf-id="hf-h60x" class="grain"></div>
+  </div>
+  <script src="assets/hb.js"></script>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      const $ = (s) => document.querySelector(s);
+      const B = 0.508;
+
+      // La píldora sigue grabando desde el gancho: lo que dices se vuelve el título.
+      const record = HB.pill(tl, { rec: "#r-rec", proc: "#r-proc", dash: "#r-dash", wave: "#r-wave", live: "#r-live", livetxt: "#r-livetxt" });
+      record(0, 1.75, { held: true, raw: "dicta en cualquier app de tu mac" });
+
+      // Palabras en medio beat: entran grandes y desenfocadas, aterrizan secas.
+      const words = [...document.querySelectorAll("#r-title > .word")];
+      words.forEach((w, i) => {
+        tl.fromTo(w, { opacity: 0, scale: 1.35, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, ease: "expo.out" }, 0.05 + i * (B / 2));
+      });
+
+      // Subtítulo por máscara en el downbeat.
+      const sub = HB.words($("#r-sub"));
+      tl.fromTo(sub, { opacity: 0, y: 40, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, y: 0, clipPath: "inset(0 0 0% 0)", duration: 0.45, stagger: 0.06, ease: "power4.out" }, 2.03);
+
+      // Tragamonedas a corcheas: cualquier app es cualquier app.
+      const N = 8, step = B / 4;
+      HB.drive(tl, 3.05, N * step, (t) => {
+        const i = Math.min(N, Math.floor(t / step));
+        $("#r-col").style.transform = `translateY(${-i * 1.08}em)`;
+      });
+      tl.fromTo("#r-slot", { scale: 1 }, { scale: 1.08, duration: 0.12, ease: "power2.out", yoyo: true, repeat: 1, immediateRender: false }, 3.05 + N * step);
+
+      // Salida: el suelo cálido sube como una hoja y se lleva el título.
+      tl.to(["#r-title", "#r-sub"], { y: -380, filter: "blur(10px)", duration: 0.45, ease: "power3.in", stagger: 0.03 }, 5.6);
+      tl.to("#r-dash", { opacity: 0, duration: 0.2 }, 5.6);
+      tl.fromTo("#r-wipe", { y: 0 }, { y: -1140, duration: 0.5, ease: "power4.inOut" }, 5.6);
+
+      window.__timelines["revela"] = tl;
+    })();
+  </script>
+</template>

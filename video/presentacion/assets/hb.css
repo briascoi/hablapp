@@ -1,0 +1,68 @@
+/* Tokens y piezas reales de hablapp (Theme.swift, FlowBar.swift) a escala de video. */
+@font-face { font-family: "HB Serif"; src: url("fonts/NewYork.ttf") format("truetype"); font-weight: 1 1000; }
+@font-face { font-family: "HB Sans"; src: url("fonts/SFNS.ttf") format("truetype"); font-weight: 1 1000; }
+@font-face { font-family: "HB Mono"; src: url("fonts/SFNSMono.ttf") format("truetype"); font-weight: 1 1000; }
+
+:root {
+  --bg: #F3F1EC; --card: #FCFBF9; --panel: #F3F1ED; --line: #E6E3DD;
+  --ink: #1C1B1A; --muted: #6B675F; --selected: #E7E4DE;
+  --accent: #7B4FC0; --accent-soft: #EFE7FB; --cmd: #C4A5FF; --cmd-stroke: #B794F6;
+  --fn: #F4A647; --fn-edge: #B86E10; --fn-ink: #2A1A00; --teal: #2F5D62;
+  --dark: #171615; --dark-card: #21201E; --dark-ink: #EDEBE7;
+  --serif: "HB Serif", Georgia, serif; --sans: "HB Sans", system-ui, sans-serif; --mono: "HB Mono", Menlo, monospace;
+  --shadow: 0 2px 4px rgba(28,27,26,.06), 0 24px 80px rgba(28,27,26,.12);
+}
+
+.hb { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: antialiased; }
+.serif { font-family: var(--serif); font-weight: 400; letter-spacing: -0.01em; }
+.word { display: inline-block; }
+
+/* Píldora de FlowBar a 2.5x: cápsula negra 90%, borde blanco 18%. */
+.pill {
+  position: relative; height: 85px; border-radius: 999px;
+  background: rgba(0,0,0,.9); box-shadow: 0 0 0 2.5px rgba(255,255,255,.18), 0 8px 20px rgba(0,0,0,.25);
+  display: flex; align-items: center; justify-content: center; gap: 25px; padding: 0 40px;
+}
+.wave { display: flex; align-items: center; gap: 7.5px; height: 60px; }
+.wave i { display: block; width: 7.5px; height: 10px; border-radius: 999px; background: #fff; }
+.pill.cmd { box-shadow: 0 0 0 3.75px rgba(183,148,246,.8), 0 8px 20px rgba(0,0,0,.25); }
+.pill.cmd .wave i { background: var(--cmd); }
+.live {
+  position: relative; height: 75px; border-radius: 999px; padding: 0 35px;
+  background: rgba(0,0,0,.9); box-shadow: 0 0 0 2.5px rgba(255,255,255,.18);
+  color: rgba(255,255,255,.92); font: 500 30px/75px var(--sans); white-space: nowrap; overflow: hidden;
+  max-width: 950px; direction: rtl; text-align: left;
+}
+.live span { direction: ltr; unicode-bidi: plaintext; }
+.pbtn { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: none; }
+
+/* Tecla dibujada (Key de Theme.swift) con canto para el gesto de pulsar. */
+.key {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--panel); color: var(--ink); border: 2px solid var(--line); border-radius: 14px;
+  font: 500 34px var(--sans); min-width: 64px; height: 64px; padding: 0 16px;
+  box-shadow: 0 5px 0 var(--line);
+}
+.key.fn { background: var(--fn); color: var(--fn-ink); border-color: var(--fn-edge); box-shadow: 0 5px 0 var(--fn-edge); }
+
+/* Ventana genérica de macOS para "cualquier app". */
+.win { position: absolute; background: var(--card); border-radius: 26px; box-shadow: var(--shadow); overflow: hidden; border: 2px solid var(--line); }
+.win .bar { height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 2px solid var(--line); background: #F7F5F1; }
+.win .bar b { width: 18px; height: 18px; border-radius: 50%; background: #E2DED7; }
+.win .bar span { margin-left: 18px; font: 600 30px var(--sans); color: var(--muted); }
+.caret { display: inline-block; width: 4px; height: 1.05em; background: var(--ink); vertical-align: -0.15em; margin-left: 2px; }
+
+.chip { display: inline-flex; align-items: center; background: var(--accent-soft); color: var(--accent); font: 600 28px var(--sans); padding: 8px 18px; border-radius: 12px; }
+.card { background: var(--card); border: 2px solid var(--line); border-radius: 26px; }
+
+.grain { position: absolute; inset: 0; pointer-events: none; opacity: .05; mix-blend-mode: multiply;
+  background-image: url("img/grain.png"); background-size: 512px 512px; }
+
+/* Dock: la píldora abajo al centro, como en FlowBar (piezas superpuestas en la misma celda). */
+.dock { position: absolute; left: 0; right: 0; top: 941px; height: 85px; display: grid; place-items: center; }
+.ldock { position: absolute; left: 0; right: 0; top: 848px; height: 75px; display: grid; place-items: center; }
+.dock > *, .ldock > * { grid-area: 1 / 1; }
+.dash { width: 105px; height: 20px; border-radius: 999px; background: rgba(0,0,0,.82); box-shadow: 0 0 0 2.5px rgba(255,255,255,.28); }
+.dots { display: flex; gap: 12px; }
+.dots i { width: 12.5px; height: 12.5px; border-radius: 50%; background: #fff; display: block; }
+.pill.cmd .dots i { background: var(--cmd); }

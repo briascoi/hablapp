@@ -1,0 +1,14 @@
+# Cachés de HyperFrames y del preview
+.hyperframes/
+.thumbnails/
+.waveform-cache/
+node_modules/
+
+# Fuentes del sistema de Apple: su licencia no permite redistribuirlas
+assets/fonts/SFNS.ttf
+assets/fonts/SFNSMono.ttf
+assets/fonts/NewYork.ttf
+
+# Música sin recortar (la que se usa es music.mp3)
+assets/audio/music-raw.mp3
+.impeccable/hook.cache.json
