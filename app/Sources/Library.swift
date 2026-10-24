@@ -383,6 +383,7 @@ enum AppIcon {
 struct TransformsPage: View {
     @ObservedObject var store = Store.shared
     @AppStorage("transforms") var enabled = true
+    @AppStorage("transformShortcuts") var shortcutsEnabled = true
     @AppStorage("autoTransform") var auto = ""
     @State var editing: Transform?
     let keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
@@ -393,10 +394,21 @@ struct TransformsPage: View {
                 Toggle("Activado", isOn: $enabled).toggleStyle(.switch).font(T.sans(13))
             }
             Hero(title: "Transforms funciona donde escribas",
-                 subtitle: "Selecciona un texto en cualquier app y pulsa ⌥ más un número para aplicar el transform y pegar el resultado.",
+                 subtitle: "Selecciona un texto en cualquier app y pulsa Control + Command más un número para aplicar el transform y pegar el resultado.",
                  colors: [Color(hex: 0x1F3B3E), Color(hex: 0x2F5D62), Color(hex: 0x6B4A33)]) {
-                HStack(spacing: 6) { HeroChip(text: "⌥ 1"); HeroChip(text: "Pulir", italic: true) }
+                HStack(spacing: 6) { HeroChip(text: "⌃⌘ 1"); HeroChip(text: "Pulir", italic: true) }
             }
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Atajos de teclado").font(T.sans(14, .medium)).foregroundStyle(T.text)
+                    Text("Control + Command + 1 a 9. Puedes desactivarlos y conservar los transforms automáticos.")
+                        .font(T.sans(12)).foregroundStyle(T.muted)
+                }
+                Spacer()
+                Toggle("Atajos de teclado", isOn: $shortcutsEnabled).labelsHidden().toggleStyle(.switch)
+            }
+            .padding(16).background(T.panel, in: RoundedRectangle(cornerRadius: 12))
+            .disabled(!enabled).opacity(enabled ? 1 : 0.5)
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Transform general").font(T.sans(14, .medium)).foregroundStyle(T.text)
@@ -426,7 +438,9 @@ struct TransformsPage: View {
                     Button { editing = t } label: {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack(spacing: 4) {
-                                if i < keys.count { Key(text: "⌥"); Key(text: keys[i]) }
+                                if shortcutsEnabled && enabled && i < keys.count {
+                                    Key(text: "⌃"); Key(text: "⌘"); Key(text: keys[i])
+                                }
                                 Spacer()
                                 if auto == t.id.uuidString { Chip(text: "Automático") }
                             }

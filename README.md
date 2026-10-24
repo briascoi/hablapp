@@ -31,7 +31,7 @@ Deja la app en `app/build/hablapp.app`. Con `./build.sh install` además la copi
 
 En **Transforms › Transform por app**, elige **Agregar app** y asigna un transform a cada aplicación. Puedes usar, por ejemplo, «Prompt engineer» en ChatGPT y Claude, y crear un transform con tus instrucciones de formato para WhatsApp.
 
-Las aplicaciones sin regla usan el **Transform general**. Elige **Ninguno** para conservar el formato habitual del dictado en una aplicación concreta. Las reglas se guardan automáticamente. El interruptor de Transforms permite desactivar tanto los atajos como los transforms automáticos.
+Las aplicaciones sin regla usan el **Transform general**. Elige **Ninguno** para conservar el formato habitual del dictado en una aplicación concreta. Las reglas se guardan automáticamente. El interruptor de Transforms permite desactivar tanto los atajos como los transforms automáticos. Para aplicar un transform al texto seleccionado, usa **Control + Command + 1 a 9**. El interruptor **Atajos de teclado** permite desactivar sólo estos atajos y conservar los transforms automáticos. Las combinaciones con Option quedan disponibles para escribir caracteres.
 
 También puedes asignar reglas para ChatGPT, Claude y WhatsApp en el navegador. El servicio tiene prioridad sobre la regla del navegador. Hablapp lo reconoce por la dirección que expone Accesibilidad o, si no está disponible, por la marca en el título de la pestaña. Si no logra reconocerlo, usa la regla del navegador o el general. Los transforms locales con IA requieren Apple Intelligence.
 

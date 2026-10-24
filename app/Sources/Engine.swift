@@ -252,10 +252,14 @@ final class Engine {
             if code == 9 { pasteLast(); return true }  // ⌃⌘V
             if code == 8 { copyLast(); return true }  // ⌃⌘C
         }
-        if mods == .maskAlternate, defaults.object(forKey: "transforms") as? Bool ?? true,
-           let i = [18, 19, 20, 21, 23, 22, 26, 28, 25].firstIndex(of: Int(code)) {
-            let list = Store.shared.transforms
-            if i < list.count { runTransform(list[i]); return true }
+        if mods == TransformShortcuts.modifiers, let i = TransformShortcuts.index(
+            keyCode: Int(code), flags: flags, count: Store.shared.transforms.count,
+            enabled: (defaults.object(forKey: "transforms") as? Bool ?? true)
+                && (defaults.object(forKey: "transformShortcuts") as? Bool ?? true),
+            idle: mode == .idle, repeating: event.getIntegerValueField(.keyboardEventAutorepeat) != 0
+        ) {
+            runTransform(Store.shared.transforms[i])
+            return true
         }
         return false
     }

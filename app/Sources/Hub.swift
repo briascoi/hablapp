@@ -160,7 +160,7 @@ struct ShortcutsView: View {
         ("Modo comando", "Seleccioná texto y decí qué hacer con él", ["fn", "⌃ ctrl"]),
         ("Pegar la última transcripción", "Vuelve a pegar lo último que dictaste", ["⌃ ctrl", "⌘ cmd", "V"]),
         ("Copiar la última transcripción", "La deja en el portapapeles", ["⌃ ctrl", "⌘ cmd", "C"]),
-        ("Transforms", "Sobre el texto seleccionado", ["⌥ opt", "1…9"]),
+        ("Transforms", "Sobre el texto seleccionado, si activas sus atajos", ["⌃ ctrl", "⌘ cmd", "1…9"]),
     ]
     var body: some View {
         Modal(title: "Atajos", subtitle: "Los atajos que usa hablapp.", width: 560, onClose: onClose) {

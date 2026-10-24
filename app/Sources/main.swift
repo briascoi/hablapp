@@ -208,6 +208,7 @@ func selfTest() {
     var fails = 0
     func check(_ name: String, _ ok: Bool) { print(ok ? "ok    " : "FALLA ", name); if !ok { fails += 1 } }
     updatesSupportTests(check)
+    transformShortcutsTests(check)
 
     // Comparación de versiones del actualizador
     check("0.10.0 es más nueva que 0.9.1", Updater.newer("0.10.0", than: "0.9.1"))
