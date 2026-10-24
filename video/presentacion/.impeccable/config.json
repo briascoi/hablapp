@@ -20,6 +20,15 @@
         ],
         "createdAt": "2026-10-24T22:19:18.116Z",
         "reason": "agent: la pantalla del Mac recorta las ondas a propósito (no salen del Mac)"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-10-24T22:49:33.797Z",
+        "reason": "Claude: #F3F1EC is Hablapp's brand background, defined in app/Sources/Theme.swift and docs/style.css"
       }
     ]
   }
