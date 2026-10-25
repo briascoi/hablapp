@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "HB Serif"; src: url("assets/fonts/NewYork.ttf"); font-weight: 1 1000; }
+      @font-face { font-family: "HB Sans"; src: url("assets/fonts/SFNS.ttf"); font-weight: 1 1000; }
+      @font-face { font-family: "HB Mono"; src: url("assets/fonts/SFNSMono.ttf"); font-weight: 1 1000; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0B0908; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; font-family: "HB Sans"; color: #F5F0E6; -webkit-font-smoothing: antialiased; }
+
+      /* Mundo continuo: fondo y luz en una sola capa global, nunca se cortan */
+      #bg { position: absolute; inset: 0; background: radial-gradient(1100px 700px at 72% 30%, rgba(80,58,40,.5), transparent 70%), linear-gradient(180deg, #14100D 0%, #0B0908 100%); }
+      .light { position: absolute; left: 0; top: 0; width: 1800px; height: 1200px; margin: -600px 0 0 -900px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(245,166,71,.36), rgba(245,166,71,.12) 55%, transparent 100%); }
+      .shot { position: absolute; inset: 0; transform-origin: 960px 540px; }
+
+      /* 1 · Tecla fn extruida en macro */
+      .keywrap { position: absolute; left: 500px; top: 150px; width: 900px; height: 900px; perspective: 1600px; }
+      .key { position: absolute; left: 170px; top: 90px; width: 560px; height: 560px; transform-style: preserve-3d; transform: rotateX(54deg) rotateZ(-24deg); }
+      .key .side { position: absolute; inset: 0; border-radius: 104px; }
+      .key .top { position: absolute; inset: 0; border-radius: 104px;
+        background: radial-gradient(120% 90% at 30% 20%, #FFD18C 0%, #F7AE52 38%, #E08A28 75%, #C4721A 100%);
+        box-shadow: inset 0 6px 0 rgba(255,236,200,.7), inset 0 -10px 24px rgba(120,60,0,.45); }
+      .key .top b { position: absolute; left: 76px; top: 64px; font: 600 160px "HB Sans"; color: #3A2200; opacity: .85; }
+      .keyshadow { position: absolute; left: 600px; top: 560px; width: 700px; height: 280px; border-radius: 50%; background: rgba(0,0,0,.75); filter: blur(50px); }
+      .flare { position: absolute; left: 960px; top: 560px; width: 1400px; height: 1000px; margin: -500px 0 0 -700px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(255,196,120,.55), rgba(245,166,71,.18) 50%, transparent 100%); mix-blend-mode: screen; }
+      .cap { position: absolute; left: 96px; top: 92px; font: 500 34px "HB Sans"; color: rgba(245,240,230,.62); }
+      .cap b { color: #F5A647; font-weight: 600; }
+      .word { display: inline-block; }
+
+      /* 2 · Píldora macro y texto dictado en un plano 3D */
+      .bgwin { position: absolute; left: 980px; top: 120px; width: 1180px; height: 760px; border-radius: 34px; background: #F3F1EC;
+        transform: perspective(1800px) rotateY(26deg) rotateX(8deg); transform-origin: left center;
+        filter: blur(12px) brightness(.38) sepia(.55); box-shadow: 0 60px 140px rgba(0,0,0,.6); }
+      .bgwin .bar { height: 70px; border-bottom: 2px solid #E6E3DD; display: flex; gap: 14px; align-items: center; padding: 0 30px; }
+      .bgwin .bar i { width: 20px; height: 20px; border-radius: 50%; background: #DDD8D0; }
+      .bgwin p { margin: 40px 50px; font: 400 44px/1.4 "HB Sans"; color: #1C1B1A; }
+      .ribbon { position: absolute; left: 905px; top: 318px; width: 1700px; white-space: nowrap; transform: perspective(1600px) rotateY(16deg) rotateX(5deg); transform-origin: left center; }
+      .ribbon .word { font: 400 122px/1.1 "HB Serif"; }
+      .p { color: #F7B262; }
+      .win .p { color: #A35F12; }
+      .pill { position: absolute; left: 250px; top: 300px; width: 602px; height: 210px; }
+      .pillbg { position: absolute; inset: 0; border-radius: 999px; background: linear-gradient(180deg, #1A1715 0%, #050404 100%);
+        box-shadow: 0 0 0 4px rgba(255,255,255,.14), inset 0 3px 0 rgba(255,255,255,.12); }
+      /* Sombra aparte: en la píldora escalada Chrome la recorta al borde de la capa */
+      .pillshadow { position: absolute; left: 40px; right: 40px; top: 90px; height: 190px; border-radius: 50%; background: rgba(0,0,0,.7); filter: blur(40px); }
+      .pillbg::after { content: ""; position: absolute; left: 60px; right: 60px; top: 10px; height: 60px; border-radius: 999px; background: linear-gradient(180deg, rgba(255,255,255,.12), transparent); }
+      .bars { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 22px; }
+      .bars i { display: block; width: 18px; border-radius: 999px; background: linear-gradient(180deg, #fff, #E9E2D5); }
+
+      /* 3 · El texto aterriza en Mail */
+      .mailtilt { position: absolute; left: 300px; top: 140px; width: 1320px; height: 800px; transform: perspective(2200px) rotateY(-16deg) rotateX(9deg); }
+      .win { position: absolute; inset: 0; border-radius: 34px; background: #F3F1EC; color: #1C1B1A; overflow: hidden;
+        box-shadow: 0 0 0 2px rgba(255,255,255,.25), 0 80px 160px rgba(0,0,0,.65); }
+      .win .bar { height: 76px; border-bottom: 2px solid #E2DED7; display: flex; gap: 14px; align-items: center; padding: 0 32px; background: #ECE9E3; }
+      .win .bar i { width: 20px; height: 20px; border-radius: 50%; background: #D6D1C8; }
+      .win .bar span { margin-left: 18px; font: 600 30px "HB Sans"; color: #6B675F; }
+      .win .row { margin: 0 56px; padding: 22px 0; border-bottom: 2px solid #E6E3DD; font: 400 34px "HB Sans"; color: #8A857C; }
+      .win .row b { color: #1C1B1A; font-weight: 500; }
+      .win .body { margin: 44px 56px; font: 400 64px/1.25 "HB Serif"; }
+      .caret { display: inline-block; width: 5px; height: 64px; margin-left: 6px; background: #1C1B1A; vertical-align: -8px; }
+
+      /* 4 · Cualquier app, un corte por golpe */
+      .apptilt { position: absolute; left: 360px; top: 230px; width: 1200px; height: 560px; }
+      .apptilt .bar { height: 96px; }
+      .apptilt .bar span { font-size: 40px; color: #1C1B1A; }
+      .apptilt .body { margin: 56px 64px; }
+      .ln { height: 34px; border-radius: 17px; background: #D9D3C8; margin: 0 0 30px; transform-origin: left center; }
+      .ln.on { background: #3B3833; }
+      .a-msg .bub { height: 74px; border-radius: 37px; margin-bottom: 26px; }
+      .a-msg .in { width: 52%; background: #E3DED5; }
+      .a-msg .out { width: 64%; margin-left: auto; background: #0A84FF; transform-origin: right center; }
+      .a-slack .win { padding-left: 230px; }
+      .a-slack .side { position: absolute; left: 0; top: 0; bottom: 0; width: 230px; background: #3F0E40; }
+      .a-notes .bar { background: #F2C94C; border-color: #E0B53A; }
+      .a-claude .ln.on { background: #C96442; }
+      .mini { position: absolute; left: 960px; top: 900px; width: 300px; height: 92px; margin-left: -150px; }
+      .mini .pillbg { box-shadow: 0 0 0 3px rgba(255,255,255,.18), 0 30px 60px rgba(0,0,0,.6); }
+      .mini .bars { gap: 10px; }
+      .mini .bars i { width: 9px; }
+
+      /* 5 · Cierre */
+      .glow { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 70px; opacity: .07; filter: blur(6px); }
+      .glow i { display: block; width: 64px; border-radius: 999px; background: #F5F0E6; }
+      .titlewrap { position: absolute; left: 0; right: 0; top: 300px; text-align: center; perspective: 1400px; }
+      .title { font: 400 150px/1.06 "HB Serif"; letter-spacing: -0.02em; }
+      .title .o { color: #F5A647; }
+      .brand { position: absolute; left: 0; right: 0; top: 690px; display: flex; justify-content: center; align-items: center; gap: 30px; }
+      .brand img { width: 118px; height: 118px; }
+      .brand span { font: 600 76px "HB Sans"; letter-spacing: -0.02em; }
+      .fine { position: absolute; left: 0; right: 0; top: 860px; text-align: center; font: 500 30px "HB Mono"; color: rgba(245,240,230,.7); }
+
+      .grain { position: absolute; inset: 0; opacity: .06; mix-blend-mode: overlay; background: url("assets/img/grain.png"); background-size: 512px; pointer-events: none; }
+      #black { position: absolute; inset: 0; background: #000; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1920" data-height="1080" data-motion-blur="on">
+      <div id="bg" class="clip" data-start="0" data-duration="20" data-track-index="0"><div class="light" id="light"></div></div>
+
+      <div id="world" class="clip" data-start="0" data-duration="20" data-track-index="1">
+        <div class="shot" id="s-key">
+          <div class="keyshadow"></div>
+          <div class="keywrap"><div class="key" id="key"><div class="top" id="keytop"><b>fn</b></div></div></div>
+          <div class="cap" id="cap"><span class="word">Mantén&nbsp;</span><span class="word"><b>fn</b>&nbsp;</span><span class="word">y&nbsp;</span><span class="word">habla</span></div>
+        </div>
+
+        <div class="shot" id="s-pill">
+          <div class="bgwin"><div class="bar"><i></i><i></i><i></i></div><p>Para: Lucía Fernández<br>Asunto: Almuerzo</p></div>
+          <div class="ribbon" id="ribbon" data-layout-allow-overflow data-layout-allow-overlap><span class="word">Hola<span class="p">,</span>&nbsp;</span><span class="word"><span class="p">¿</span>estás&nbsp;</span><span class="word">libre&nbsp;</span><span class="word">para&nbsp;</span><span class="word">almorzar&nbsp;</span><span class="word">mañana<span class="p">?</span></span></div>
+          <div class="pill" id="pill"><div class="pillshadow" id="pillshadow"></div><div class="pillbg" id="pillbg"></div><div class="bars" id="bars"></div></div>
+        </div>
+
+        <div class="shot" id="s-mail">
+          <div class="mailtilt"><div class="win" id="mailwin">
+            <div class="bar"><i></i><i></i><i></i><span>Nuevo mensaje</span></div>
+            <div class="row">Para: <b>Lucía Fernández</b></div>
+            <div class="row">Asunto: <b>Almuerzo</b></div>
+            <div class="body" id="mailbody"><span class="word">Hola<span class="p">,</span>&nbsp;</span><span class="word"><span class="p">¿</span>estás&nbsp;</span><span class="word">libre&nbsp;</span><span class="word">para&nbsp;</span><span class="word">almorzar&nbsp;</span><span class="word">mañana<span class="p">?</span></span><span class="caret" id="caret"></span></div>
+          </div></div>
+        </div>
+
+        <div class="shot" id="s-apps"></div>
+        <div class="mini" id="mini"><div class="pillbg"></div><div class="bars" id="minibars"></div></div>
+
+        <div class="shot" id="s-end">
+          <div class="glow" id="glow"></div>
+          <div class="titlewrap" id="titlewrap"><div class="title" id="title"><span class="word">Dicta&nbsp;</span><span class="word">en&nbsp;</span><span class="word o">cualquier&nbsp;</span><span class="word">app</span><br><span class="word">de&nbsp;</span><span class="word">tu&nbsp;</span><span class="word">Mac<span class="p">.</span></span></div></div>
+          <div class="brand" id="brand"><img src="assets/img/icon.png" alt="" id="icon" /><span id="wordmark">Hablapp</span></div>
+          <div class="fine" id="fine">Gratis y de código abierto · macOS 26 · Apple Silicon</div>
+        </div>
+
+        <div class="flare" id="flare"></div>
+        <div class="grain"></div>
+        <div id="black"></div>
+      </div>
+
+      <audio id="music" class="clip" src="assets/audio/mix-m1.wav" data-start="0" data-duration="20" data-track-index="10" data-volume="1"></audio>
+    </div>
+    <script>
+      // Anclajes medidos en cada tema (downbeats). build-mix.sh usa los mismos para los efectos.
+      const TRACK = "m1";
+      const A = {
+        m1: { press: 1.65, ribbon: 3.79, land: 8.07, cuts: 10.21, step: 1.07, title: 14.49, icon: 16.63 },
+        m2: { press: 1.76, ribbon: 3.46, land: 8.45, cuts: 10.2, step: 0.85, title: 13.6, icon: 16.97 },
+      }[TRACK];
+      const q = (s) => document.querySelector(s);
+      const qa = (s) => [...document.querySelectorAll(s)];
+      const tl = gsap.timeline({ paused: true });
+      const show = (el, at) => tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.01, immediateRender: false }, at);
+      const hide = (el, at) => tl.fromTo(el, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.01, immediateRender: false }, at);
+      const drive = (at, dur, fn) => {
+        const o = { t: 0 };
+        fn(0);
+        tl.fromTo(o, { t: 0 }, { t: dur, duration: dur, ease: "none", immediateRender: false, onUpdate: () => fn(o.t) }, at);
+      };
+      // Onda de voz determinista: sílabas, nunca Math.random.
+      const wave = (bars, base, t, amp) => bars.forEach((b, i) => {
+        const syl = Math.abs(Math.sin(t * 8.3 + i * 0.9) * Math.sin(t * 3.1 + i * 1.7));
+        b.style.height = Math.max(base[i] * 0.16, base[i] * (0.22 + 0.78 * syl) * amp) + "px";
+      });
+      const makeBars = (el, n) => { el.innerHTML = "<i></i>".repeat(n); return [...el.children]; };
+
+      // Tecla extruida: 12 capas de lado, de la sombra al borde iluminado.
+      const key = q("#key");
+      for (let i = 0; i < 12; i++) {
+        const d = document.createElement("div");
+        d.className = "side";
+        const c = (a, b) => Math.round(a + (b - a) * (i / 11));
+        d.style.background = `rgb(${c(0x6e, 0xc6)},${c(0x3e, 0x75)},${c(0x05, 0x13)})`;
+        d.style.transform = `translateZ(${i * 5}px)`;
+        key.insertBefore(d, q("#keytop"));
+      }
+
+      const P = A.press, R = A.ribbon, L = A.land, C = A.cuts, T = A.title, I = A.icon;
+
+      /* Luz global: se mueve con la cámara, sin cortes */
+      tl.fromTo("#light", { x: 760, y: 980, opacity: 0, scale: 0.7 }, { x: 900, y: 760, opacity: 1, scale: 1, duration: P, ease: "power2.out" }, 0);
+      tl.fromTo("#light", { x: 900, y: 760 }, { x: 560, y: 560, duration: 1.2, ease: "power3.inOut", immediateRender: false }, P + 0.1);
+      tl.fromTo("#light", { x: 560, y: 560 }, { x: 1180, y: 520, duration: 1.4, ease: "power3.inOut", immediateRender: false }, L - 0.6);
+      tl.fromTo("#light", { x: 1180, y: 520 }, { x: 960, y: 600, scale: 1.25, duration: 2.4, ease: "power2.inOut", immediateRender: false }, C + A.step * 2);
+      // Fundidos largos y en sine: con menos tiempo la luminancia salta más de 1,5 por cuadro.
+      tl.fromTo("#black", { opacity: 1 }, { opacity: 0, duration: 2.0, ease: "sine.inOut" }, 0);
+
+      /* 1 · fn en macro */
+      ["#s-pill", "#s-mail", "#s-apps", "#mini", "#s-end"].forEach((s) => gsap.set(s, { autoAlpha: 0 }));
+      tl.fromTo("#s-key", { scale: 1.0 }, { scale: 1.09, duration: P + 0.2, ease: "sine.inOut" }, 0);
+      tl.fromTo("#cap .word", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.09 }, 0.35);
+      tl.fromTo("#keytop", { z: 64 }, { z: 34, duration: 0.1, ease: "power4.out" }, P);
+      tl.fromTo("#flare", { opacity: 0 }, { opacity: 0.6, duration: 0.12, ease: "power2.out" }, P);
+      tl.fromTo("#flare", { opacity: 0.6 }, { opacity: 0, duration: 0.8, ease: "sine.out", immediateRender: false }, P + 0.12);
+      tl.fromTo("#s-key", { x: 0 }, { x: -1920, duration: 0.32, ease: "power3.in", immediateRender: false }, P + 0.14);
+      hide("#s-key", P + 0.48);
+
+      /* 2 · La píldora crece desde la rayita y el texto sale volando hacia la profundidad */
+      const bars = makeBars(q("#bars"), 11);
+      const BIG = [46, 78, 120, 64, 150, 98, 170, 110, 72, 128, 58];
+      show("#s-pill", P + 0.22);
+      tl.fromTo("#s-pill", { x: 613 + 1920, y: 202, scale: 1.5 }, { x: 613, y: 202, scale: 1.5, duration: 0.42, ease: "power3.out", immediateRender: false }, P + 0.22);
+      tl.fromTo("#pillbg", { scaleX: 0.16, scaleY: 0.12 }, { scaleX: 1, scaleY: 1, duration: 0.6, ease: "expo.out" }, P + 0.5);
+      tl.fromTo("#pillshadow", { opacity: 0, scaleX: 0.2 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: "expo.out" }, P + 0.5);
+      tl.fromTo("#bars", { opacity: 0, scaleY: 0.2 }, { opacity: 1, scaleY: 1, duration: 0.45, ease: "back.out(1.6)" }, P + 0.62);
+      drive(P + 0.62, L - P - 0.62, (t) => wave(bars, BIG, t + P, Math.min(1, t / 0.4)));
+      tl.fromTo("#s-pill", { x: 613, y: 202, scale: 1.5 }, { x: 0, y: 0, scale: 1, duration: 1.5, ease: "power3.inOut", immediateRender: false }, R - 0.1);
+      // La cámara acompaña a las palabras mientras se dictan, hasta dejar la frase entera en cuadro.
+      tl.fromTo("#s-pill", { x: 0, scale: 1 }, { x: -620, scale: 0.9, duration: L - R - 1.4, ease: "sine.inOut", immediateRender: false }, R + 1.4);
+      const rw = qa("#ribbon .word");
+      const endBlur = [0, 0, 0, 3, 3, 6], endOp = [1, 1, 1, 0.6, 0.6, 0.35];
+      rw.forEach((w, i) => {
+        tl.fromTo(w, { x: -340, opacity: 0, scale: 0.6, filter: "blur(16px)" },
+          { x: 0, opacity: endOp[i], scale: 1, filter: `blur(${endBlur[i]}px)`, duration: 0.8, ease: "expo.out" }, R + 0.15 + i * A.step / 2);
+      });
+      // Rack focus antes del corte: lo lejano entra en foco.
+      tl.fromTo(rw.slice(3), { opacity: (i) => endOp[i + 3], filter: (i) => `blur(${endBlur[i + 3]}px)` },
+        { opacity: 1, filter: "blur(0px)", duration: 0.9, ease: "power2.inOut", immediateRender: false }, L - 1.3);
+      hide("#s-pill", L);
+
+      /* 3 · Aterriza en Mail, en el golpe de batería */
+      show("#s-mail", L);
+      tl.fromTo("#mailwin", { scale: 1.08, x: 50 }, { scale: 1, x: 0, duration: C - L + 0.3, ease: "power2.out" }, L);
+      tl.fromTo("#mailbody .word", { opacity: 0, y: -36, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out", stagger: 0.045 }, L + 0.05);
+      drive(L, C - L, (t) => (q("#caret").style.opacity = t < 0.35 ? 0 : Math.floor(t * 2.4) % 2 ? 0.15 : 1));
+      hide("#s-mail", C);
+
+      /* 4 · Cualquier app: un corte cada dos tiempos */
+      // Sin texto legible: los cortes duran un golpe y la regla es que todo texto se lea dos veces.
+      const APPS = [["Mensajes", 18, "a-msg"], ["Slack", -18, "a-slack"], ["Notas", 16, "a-notes"], ["Claude", -16, "a-claude"]];
+      const LN = [[0.86, 0.62, 0.74], [0.7, 0.9, 0.48], [0.92, 0.56, 0.8], [0.66, 0.84, 0.58]];
+      const lines = (i) => i === 0
+        ? `<div class="bub in"></div><div class="bub out ln on"></div>`
+        : LN[i].map((w, j) => `<div class="ln${j === 0 ? " on" : ""}" style="width:${w * 100}%"></div>`).join("");
+      q("#s-apps").innerHTML = APPS.map(([name, ry, cls], i) =>
+        `<div class="cut ${cls}" id="cut${i}" style="position:absolute;inset:0"><div class="apptilt" style="transform:perspective(2000px) rotateY(${ry}deg) rotateX(8deg)">` +
+        `<div class="win" id="appwin${i}">${cls === "a-slack" ? '<div class="side"></div>' : ""}<div class="bar"><i></i><i></i><i></i><span>${name}</span></div><div class="body">${lines(i)}</div></div></div></div>`).join("");
+      show("#s-apps", C);
+      show("#mini", C);
+      const mini = makeBars(q("#minibars"), 11);
+      const SMALL = BIG.map((h) => h * 0.36);
+      drive(C, T - C, (t) => wave(mini, SMALL, t + C, 1));
+      APPS.forEach(([, ry], i) => {
+        const at = C + i * A.step;
+        if (i > 0) hide(`#cut${i - 1}`, at);
+        if (i > 0) show(`#cut${i}`, at); else gsap.set(`#cut0`, { autoAlpha: 1 });
+        if (i > 0) gsap.set(`#cut${i}`, { autoAlpha: 0 });
+        tl.fromTo(`#appwin${i}`, { scale: 1.1, x: ry > 0 ? 90 : -90 }, { scale: 1, x: 0, duration: A.step, ease: "expo.out" }, at);
+        tl.fromTo(`#cut${i} .ln.on`, { scaleX: 0 }, { scaleX: 1, duration: A.step * 0.7, ease: "power2.out" }, at + 0.06);
+      });
+      hide("#s-apps", T);
+      hide("#mini", T);
+
+      /* 5 · Cierre: el título sale de la profundidad, la onda queda como luz */
+      show("#s-end", T);
+      const glow = makeBars(q("#glow"), 11);
+      drive(T, 20 - T, (t) => wave(glow, BIG.map((h) => h * 3.4), t * 0.5 + T, 1));
+      tl.fromTo("#title .word", { opacity: 0, z: -520, filter: "blur(18px)" }, { opacity: 1, z: 0, filter: "blur(0px)", duration: 1.0, ease: "expo.out", stagger: A.step / 4 }, T);
+      tl.fromTo("#titlewrap", { y: 0 }, { y: -110, duration: 0.9, ease: "power3.inOut", immediateRender: false }, I - 0.2);
+      tl.fromTo("#icon", { opacity: 0, scale: 0.4, rotation: -10 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.8, ease: "back.out(1.5)" }, I);
+      tl.fromTo("#wordmark", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.7, ease: "power3.out" }, I + 0.15);
+      tl.fromTo("#fine", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, I + 0.4);
+      tl.fromTo("#black", { opacity: 0 }, { opacity: 1, duration: 1.6, ease: "sine.inOut", immediateRender: false }, 18.4);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>C · Escritorio</title>
+<style>
+  @font-face { font-family: "HB Serif"; src: url("../assets/fonts/NewYork.ttf"); font-weight: 1 1000; }
+  @font-face { font-family: "HB Sans"; src: url("../assets/fonts/SFNS.ttf"); font-weight: 1 1000; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #E9E4DA; }
+  .stage { position: absolute; inset: 0; font-family: "HB Sans"; -webkit-font-smoothing: antialiased; color: #1C1B1A;
+    background: radial-gradient(1400px 900px at 40% 35%, #F7F3EA 0%, #E6DFD2 55%, #C9BFAE 100%); }
+
+  /* El mundo: un escritorio infinito de apps, inclinado, con la cámara pasando por encima */
+  .world { position: absolute; left: 50%; top: 50%; width: 0; height: 0; perspective: 2200px; }
+  .plane { position: absolute; left: -1560px; top: -1260px; width: 3800px; height: 3000px; transform-style: preserve-3d;
+    transform: rotateX(56deg) rotateZ(-28deg); }
+  .w { position: absolute; width: 760px; height: 520px; border-radius: 30px; background: #FCFBF9; border: 2px solid #E6E3DD; overflow: hidden;
+    box-shadow: 0 30px 60px rgba(60,45,25,.18); }
+  .w .bar { height: 62px; border-bottom: 2px solid #E6E3DD; display: flex; gap: 12px; align-items: center; padding: 0 24px; background: #F7F5F1; }
+  .w .bar i { width: 17px; height: 17px; border-radius: 50%; background: #E2DED7; }
+  .w .bar span { margin-left: 14px; font: 600 28px "HB Sans"; color: #6B675F; }
+  .w .body { padding: 28px 34px; font: 400 32px/1.45 "HB Sans"; color: #3B3833; }
+  .w .line { height: 22px; border-radius: 11px; background: #ECE8E1; margin: 18px 0; }
+  .w.dim { filter: blur(3px); }
+  .w.far { filter: blur(7px); opacity: .8; }
+
+  /* La ventana enfocada se levanta del plano */
+  .hero { transform: translateZ(230px) scale(1.12); box-shadow: 0 160px 160px rgba(60,40,20,.32); border-color: #D9D3C8; }
+  .hero .body { font-size: 36px; color: #1C1B1A; }
+  .hero .p { color: #E08A1E; }
+  .caret { display: inline-block; width: 4px; height: 38px; background: #1C1B1A; vertical-align: -6px; }
+
+  /* La píldora flota sobre el mundo y proyecta su sombra */
+  .pill { position: absolute; left: 1150px; top: 860px; height: 120px; padding: 0 52px; border-radius: 999px; display: flex; align-items: center; gap: 13px;
+    background: rgba(8,7,6,.94); box-shadow: 0 0 0 3px rgba(255,255,255,.2), 0 60px 80px rgba(40,25,10,.35); }
+  .pill i { display: block; width: 10px; border-radius: 999px; background: #fff; }
+  .live { position: absolute; left: 1000px; top: 752px; height: 86px; padding: 0 40px; border-radius: 999px; background: rgba(8,7,6,.94);
+    color: rgba(255,255,255,.92); font: 500 36px/86px "HB Sans"; box-shadow: 0 0 0 3px rgba(255,255,255,.18); }
+
+  .title { position: absolute; left: 96px; top: 84px; font: 400 96px/1 "HB Serif"; letter-spacing: -0.02em; }
+  .title em { font-style: normal; color: #7B4FC0; }
+  .vig { position: absolute; inset: 0; background: radial-gradient(1500px 1000px at 45% 40%, transparent 55%, rgba(80,60,35,.32) 100%); }
+  .grain { position: absolute; inset: 0; opacity: .05; mix-blend-mode: multiply; background: url("../assets/img/grain.png"); background-size: 512px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="world"><div class="plane" id="plane"></div></div>
+  <div class="vig"></div>
+  <div class="title">Dicta en <em>cualquier</em> app</div>
+  <div class="live">almorzamos mañana a las 12</div>
+  <div class="pill" id="pill"></div>
+  <div class="grain"></div>
+</div>
+<script>
+  const apps = [
+    ["Slack", "far"], ["Notas", "far"], ["ChatGPT", "far"], ["Mensajes", "far"],
+    ["Claude", "dim"], ["Mail", "hero"], ["WhatsApp", "dim"], ["Notion", "far"],
+    ["Mensajes", "dim"], ["Pages", "dim"], ["Slack", "dim"], ["Linear", "far"],
+    ["Notas", "far"], ["Claude", "far"], ["Mail", "far"], ["ChatGPT", "far"],
+  ];
+  const plane = document.getElementById("plane");
+  apps.forEach(([name, cls], i) => {
+    const x = (i % 4) * 860 + 300, y = Math.floor(i / 4) * 620 + 300;
+    const body = cls === "hero"
+      ? `Para: Lucía Fernández<br><br>¿Almorzamos mañana a las 12<span class="p">?</span> Te paso a buscar<span class="p">.</span><span class="caret"></span>`
+      : `<div class="line" style="width:88%"></div><div class="line" style="width:64%"></div><div class="line" style="width:76%"></div>`;
+    plane.insertAdjacentHTML("beforeend",
+      `<div class="w ${cls}" style="left:${x}px;top:${y}px"><div class="bar"><i></i><i></i><i></i><span>${name}</span></div><div class="body">${body}</div></div>`);
+  });
+  const h = [26, 44, 70, 38, 86, 56, 96, 62, 42, 74, 34];
+  document.getElementById("pill").innerHTML = h.map(v => `<i style="height:${v}px"></i>`).join("");
+</script>
+</body>
+</html>

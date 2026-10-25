@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "HB Serif"; src: url("assets/fonts/NewYork.ttf"); font-weight: 1 1000; }
+      @font-face { font-family: "HB Sans"; src: url("assets/fonts/SFNS.ttf"); font-weight: 1 1000; }
+      @font-face { font-family: "HB Mono"; src: url("assets/fonts/SFNSMono.ttf"); font-weight: 1 1000; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0B0908; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; font-family: "HB Sans"; color: #F5F0E6; -webkit-font-smoothing: antialiased; }
+
+      /* Mundo continuo: fondo y luz en una sola capa global, nunca se cortan */
+      #bg { position: absolute; inset: 0; background: radial-gradient(1100px 700px at 72% 30%, rgba(80,58,40,.5), transparent 70%), linear-gradient(180deg, #14100D 0%, #0B0908 100%); }
+      .light { position: absolute; left: 0; top: 0; width: 1800px; height: 1200px; margin: -600px 0 0 -900px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(245,166,71,.36), rgba(245,166,71,.12) 55%, transparent 100%); }
+      .shot { position: absolute; inset: 0; transform-origin: 960px 540px; }
+      .word { display: inline-block; }
+      .p { color: #F7B262; }
+      .win .p { color: #A35F12; }
+
+      /* Rótulo de cada feature: nombre arriba, explicación debajo */
+      .cap { position: absolute; left: 96px; top: 92px; font: 500 34px "HB Sans"; color: rgba(245,240,230,.62); }
+      .cap b { color: #F5A647; font-weight: 600; }
+      .feat { position: absolute; left: 96px; top: 70px; }
+      .feat .k { font: 600 42px "HB Sans"; color: #F5A647; }
+      .feat .s { margin-top: 10px; font: 500 34px "HB Sans"; color: rgba(245,240,230,.66); }
+      .feat.cmd .k { color: #C4A5FF; }
+
+      /* Tecla extruida en macro (fn, ⌃, ⌘, 3) */
+      .keywrap { position: absolute; width: 900px; height: 900px; perspective: 1600px; }
+      .key { position: absolute; left: 170px; top: 90px; width: 560px; height: 560px; transform-style: preserve-3d; transform: rotateX(54deg) rotateZ(-24deg); }
+      .key .side, .key .top { position: absolute; inset: 0; border-radius: 104px; }
+      .key .top { background: radial-gradient(120% 90% at 30% 20%, #FFD18C 0%, #F7AE52 38%, #E08A28 75%, #C4721A 100%);
+        box-shadow: inset 0 6px 0 rgba(255,236,200,.7), inset 0 -10px 24px rgba(120,60,0,.45); }
+      .key .top b { position: absolute; left: 76px; top: 64px; font: 600 160px "HB Sans"; color: #3A2200; opacity: .85; }
+      .key .ring { position: absolute; inset: 22px; border-radius: 84px; border: 8px solid rgba(255,246,226,.95); box-shadow: 0 0 40px rgba(255,214,150,.9), inset 0 0 30px rgba(255,214,150,.6); }
+      .key.sm { width: 300px; height: 300px; left: 0; top: 0; }
+      .key.sm .side, .key.sm .top { border-radius: 58px; }
+      .key.sm .top b { left: 0; right: 0; top: 50px; text-align: center; font-size: 150px; }
+      .keyshadow { position: absolute; width: 700px; height: 280px; border-radius: 50%; background: rgba(0,0,0,.75); filter: blur(50px); }
+      .flare { position: absolute; left: 960px; top: 560px; width: 1400px; height: 1000px; margin: -500px 0 0 -700px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(255,196,120,.55), rgba(245,166,71,.18) 50%, transparent 100%); mix-blend-mode: screen; }
+
+      /* Píldora de dictado */
+      .bgwin { position: absolute; left: 980px; top: 120px; width: 1180px; height: 760px; border-radius: 34px; background: #F3F1EC;
+        transform: perspective(1800px) rotateY(26deg) rotateX(8deg); transform-origin: left center;
+        filter: blur(12px) brightness(.38) sepia(.55); box-shadow: 0 60px 140px rgba(0,0,0,.6); }
+      .bgwin .bar { height: 70px; border-bottom: 2px solid #E6E3DD; display: flex; gap: 14px; align-items: center; padding: 0 30px; }
+      .bgwin .bar i { width: 20px; height: 20px; border-radius: 50%; background: #DDD8D0; }
+      .bgwin p { margin: 40px 50px; font: 400 44px/1.4 "HB Sans"; color: #1C1B1A; }
+      .ribbon { position: absolute; left: 905px; top: 318px; width: 1700px; white-space: nowrap; transform: perspective(1600px) rotateY(16deg) rotateX(5deg); transform-origin: left center; }
+      .ribbon .word { font: 400 122px/1.1 "HB Serif"; }
+      .pill { position: absolute; left: 250px; top: 300px; width: 602px; height: 210px; }
+      .pillbg { position: absolute; inset: 0; border-radius: 999px; background: linear-gradient(180deg, #1A1715 0%, #050404 100%);
+        box-shadow: 0 0 0 4px rgba(255,255,255,.14), inset 0 3px 0 rgba(255,255,255,.12); }
+      /* Sombra aparte: en la píldora escalada Chrome la recorta al borde de la capa */
+      .pillshadow { position: absolute; left: 40px; right: 40px; top: 90px; height: 190px; border-radius: 50%; background: rgba(0,0,0,.7); filter: blur(40px); }
+      .pillbg::after { content: ""; position: absolute; left: 60px; right: 60px; top: 10px; height: 60px; border-radius: 999px; background: linear-gradient(180deg, rgba(255,255,255,.12), transparent); }
+      .bars { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 22px; }
+      .bars i { display: block; width: 18px; border-radius: 999px; background: linear-gradient(180deg, #fff, #E9E2D5); }
+      .mini { position: absolute; width: 300px; height: 92px; }
+      .mini .pillbg { box-shadow: 0 0 0 3px rgba(255,255,255,.18), 0 30px 60px rgba(0,0,0,.6); }
+      .mini .bars { gap: 10px; }
+      .mini .bars i { width: 9px; }
+      .mini.cmd .pillbg { background: linear-gradient(180deg, #221A36 0%, #0B0812 100%); box-shadow: 0 0 0 3px rgba(196,165,255,.5), 0 30px 60px rgba(0,0,0,.6); }
+      .mini.cmd .bars i { background: linear-gradient(180deg, #E6DAFF, #C4A5FF); }
+
+      /* Ventanas inclinadas */
+      .tilt { position: absolute; }
+      .win { position: absolute; inset: 0; border-radius: 34px; background: #F3F1EC; color: #1C1B1A; overflow: hidden;
+        box-shadow: 0 0 0 2px rgba(255,255,255,.25), 0 80px 160px rgba(0,0,0,.65); }
+      .win .bar { height: 76px; border-bottom: 2px solid #E2DED7; display: flex; gap: 14px; align-items: center; padding: 0 32px; background: #ECE9E3; }
+      .win .bar i { width: 20px; height: 20px; border-radius: 50%; background: #D6D1C8; }
+      .win .bar span { margin-left: 18px; font: 600 30px "HB Sans"; color: #6B675F; }
+      .win .row { margin: 0 56px; padding: 22px 0; border-bottom: 2px solid #E6E3DD; font: 400 34px "HB Sans"; color: #8A857C; }
+      .win .row b { color: #1C1B1A; font-weight: 500; }
+      .win .body { margin: 44px 56px; font: 400 64px/1.25 "HB Serif"; }
+      .caret { display: inline-block; width: 5px; height: 64px; margin-left: 6px; background: #1C1B1A; vertical-align: -8px; }
+      .foot { position: absolute; left: 0; right: 0; top: 968px; text-align: center; font: 500 36px "HB Sans"; color: rgba(245,240,230,.7); }
+
+      /* Estilo: el correo y el chat, frente a frente */
+      .stylecap { position: absolute; top: 150px; width: 820px; text-align: center; font: 400 54px "HB Serif"; }
+      .win .fbody { margin: 48px 52px; font: 400 54px/1.3 "HB Serif"; }
+      .bub { display: inline-block; max-width: 640px; padding: 26px 36px; border-radius: 44px; font: 400 44px/1.3 "HB Sans"; }
+      .bub.in { background: #E3DED5; color: #1C1B1A; }
+      .bub.out { background: #0A84FF; color: #fff; transform-origin: right bottom; }
+      .chat { margin: 44px 48px; display: flex; flex-direction: column; gap: 24px; }
+      .chat .r { align-self: flex-end; }
+      #cbub { position: relative; }
+      .cas { position: absolute; left: 36px; right: 36px; top: 26px; }
+
+      /* Manos libres */
+      .htitle { position: absolute; left: 1010px; top: 330px; font: 400 140px/1 "HB Serif"; }
+      .hsub { position: absolute; left: 1016px; top: 500px; width: 820px; font: 500 40px/1.35 "HB Sans"; color: rgba(245,240,230,.72); }
+
+      /* Modo comando */
+      .win .nh { margin: 40px 56px 18px; font: 700 46px "HB Sans"; }
+      .nl { position: relative; width: fit-content; margin: 0 56px; font: 400 40px/1.55 "HB Sans"; white-space: nowrap; }
+      .nl .hl { position: absolute; left: -8px; right: -8px; top: 6px; bottom: 6px; border-radius: 8px; background: rgba(196,165,255,.55); transform-origin: left center; }
+      .nl span { position: relative; }
+      .short { position: absolute; left: 56px; right: 56px; top: 210px; font: 400 60px/1.3 "HB Serif"; }
+      .said { position: absolute; left: 600px; top: 886px; font: 400 76px "HB Serif"; color: #C4A5FF; white-space: nowrap; }
+
+      /* Transforms */
+      .sent { position: absolute; left: 0; right: 0; top: 720px; text-align: center; font: 400 84px "HB Serif"; perspective: 1400px; white-space: nowrap; }
+      .sent .word { transform-origin: 50% 50% -40px; }
+      .chip { position: absolute; left: 0; right: 0; top: 880px; text-align: center; font: 500 32px "HB Mono"; color: rgba(245,240,230,.72); }
+      .chip b { color: #F5A647; font-weight: 600; }
+
+      /* Contexto */
+      .win .who b { color: #1C1B1A; border-radius: 8px; padding: 0 6px; }
+      .field { position: absolute; left: 48px; right: 48px; bottom: 44px; height: 96px; border-radius: 48px; border: 3px solid #D9D3C8; background: #fff; padding: 0 40px; font: 400 44px/90px "HB Sans"; }
+      .field .raw, .field .fin { position: absolute; left: 40px; top: 0; }
+      .field .raw { color: #8A857C; }
+      .field .fin .n { border-radius: 8px; }
+
+      /* Privada */
+      .screen { position: absolute; left: 560px; top: 140px; width: 800px; height: 500px; border-radius: 30px; border: 3px solid rgba(245,240,230,.3); overflow: hidden; }
+      .screen .bars { gap: 40px; }
+      .screen .bars i { width: 30px; }
+      .base { position: absolute; left: 470px; top: 652px; width: 980px; height: 22px; border-radius: 4px 4px 22px 22px; border: 3px solid rgba(245,240,230,.3); }
+      .ptitle { position: absolute; left: 0; right: 0; top: 750px; text-align: center; font: 400 104px "HB Serif"; }
+      .psub { position: absolute; left: 0; right: 0; top: 900px; text-align: center; font: 500 32px "HB Mono"; color: rgba(245,240,230,.7); }
+
+      /* Montaje */
+      .mcut { position: absolute; inset: 0; }
+      .mbig { position: absolute; left: 0; right: 0; top: 300px; text-align: center; font: 400 300px/1 "HB Serif"; }
+      .munit { position: absolute; left: 0; right: 0; top: 650px; text-align: center; font: 500 44px "HB Mono"; color: rgba(245,240,230,.72); }
+      .term { position: absolute; font-family: "HB Serif"; white-space: nowrap; }
+      .msnip { position: absolute; left: 0; right: 0; top: 250px; text-align: center; font: 400 150px "HB Serif"; }
+      .mexp { position: absolute; left: 0; right: 0; top: 520px; text-align: center; font: 400 72px/1.3 "HB Serif"; color: rgba(245,240,230,.85); }
+      .mline { position: absolute; left: 0; right: 0; top: 420px; text-align: center; font: 400 130px "HB Serif"; }
+
+      /* Cierre */
+      .glow { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 70px; opacity: .07; filter: blur(6px); }
+      .glow i { display: block; width: 64px; border-radius: 999px; background: #F5F0E6; }
+      .titlewrap { position: absolute; left: 0; right: 0; top: 300px; text-align: center; perspective: 1400px; }
+      .title { font: 400 150px/1.06 "HB Serif"; letter-spacing: -0.02em; }
+      .title .o { color: #F5A647; }
+      .brand { position: absolute; left: 0; right: 0; top: 530px; display: flex; justify-content: center; align-items: center; gap: 30px; }
+      .brand img { width: 118px; height: 118px; }
+      .brand span { font: 600 76px "HB Sans"; letter-spacing: -0.02em; }
+      .ctawrap { position: absolute; left: 0; right: 0; top: 694px; text-align: center; }
+      .cta { display: inline-block; padding: 20px 48px; border-radius: 999px; background: #F5A647; color: #1A1208; font: 600 40px "HB Sans"; }
+      .fine { position: absolute; left: 0; right: 0; top: 836px; text-align: center; font: 500 30px "HB Mono"; color: rgba(245,240,230,.7); }
+      .url { position: absolute; left: 0; right: 0; top: 886px; text-align: center; font: 500 34px "HB Mono"; color: #F5A647; }
+
+      .grain { position: absolute; inset: 0; opacity: .06; mix-blend-mode: overlay; background: url("assets/img/grain.png"); background-size: 512px; pointer-events: none; }
+      #black { position: absolute; inset: 0; background: #000; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="72" data-width="1920" data-height="1080" data-motion-blur="on">
+      <div id="bg" class="clip" data-start="0" data-duration="72" data-track-index="0"><div class="light" id="light"></div></div>
+
+      <div id="world" class="clip" data-start="0" data-duration="72" data-track-index="1">
+        <!-- 1 · fn en macro -->
+        <div class="shot" id="s-key">
+          <div class="keyshadow" style="left:600px;top:560px"></div>
+          <div class="keywrap" style="left:500px;top:150px"><div class="key" id="key1"><div class="top"><b>fn</b></div></div></div>
+          <div class="cap" id="cap"><span class="word">Mantén&nbsp;</span><span class="word"><b>fn</b>&nbsp;</span><span class="word">y&nbsp;</span><span class="word">habla</span></div>
+        </div>
+
+        <!-- 2 · Dictado: la frase sale volando en profundidad -->
+        <div class="shot" id="s-pill">
+          <div class="bgwin"><div class="bar"><i></i><i></i><i></i></div><p>Para: Lucía Fernández<br>Asunto: Almuerzo</p></div>
+          <div class="ribbon" id="ribbon" data-layout-allow-overflow data-layout-allow-overlap><span class="word">Hola<span class="p">,</span>&nbsp;</span><span class="word"><span class="p">¿</span>estás&nbsp;</span><span class="word">libre&nbsp;</span><span class="word">para&nbsp;</span><span class="word">almorzar&nbsp;</span><span class="word">mañana<span class="p">?</span></span></div>
+          <div class="pill" id="pill"><div class="pillshadow" id="pillshadow"></div><div class="pillbg" id="pillbg"></div><div class="bars" id="bars"></div></div>
+        </div>
+
+        <!-- 3 · Aterriza en Mail -->
+        <div class="shot" id="s-mail">
+          <div class="tilt" style="left:300px;top:110px;width:1320px;height:800px;transform:perspective(2200px) rotateY(-16deg) rotateX(9deg)"><div class="win" id="mailwin">
+            <div class="bar"><i></i><i></i><i></i><span>Nuevo mensaje</span></div>
+            <div class="row">Para: <b>Lucía Fernández</b></div>
+            <div class="row">Asunto: <b>Almuerzo</b></div>
+            <div class="body" id="mailbody"><span class="word">Hola<span class="p">,</span>&nbsp;</span><span class="word"><span class="p">¿</span>estás&nbsp;</span><span class="word">libre&nbsp;</span><span class="word">para&nbsp;</span><span class="word">almorzar&nbsp;</span><span class="word">mañana<span class="p">?</span></span><span class="caret" id="caret"></span></div>
+          </div></div>
+          <div class="foot" id="mailfoot">El texto aparece donde está el cursor</div>
+        </div>
+
+        <!-- 4 · Estilo por app -->
+        <div class="shot" id="s-style">
+          <div class="stylecap" id="capf" style="left:120px">Más formal en el correo</div>
+          <div class="stylecap" id="capc" style="left:980px">Más suelto en el chat</div>
+          <div class="tilt" style="left:120px;top:290px;width:820px;height:560px;transform:perspective(2000px) rotateY(14deg) rotateX(6deg)"><div class="win" id="fwin">
+            <div class="bar"><i></i><i></i><i></i><span>Mail</span></div>
+            <div class="fbody">Hola<span class="p">,</span> <span class="p">¿</span>estás libre para almorzar mañana<span class="p">?</span></div>
+          </div></div>
+          <div class="tilt" style="left:980px;top:290px;width:820px;height:560px;transform:perspective(2000px) rotateY(-14deg) rotateX(6deg)"><div class="win" id="cwin">
+            <div class="bar"><i></i><i></i><i></i><span>Mensajes</span></div>
+            <div class="chat"><div><span class="bub in">¿Al final vienes el viernes?</span></div><div class="r"><span class="bub out" id="cbub"><span class="fx">Hola</span><span class="word fall">,</span> <span class="word fall">¿</span><span class="fx">estás libre para almorzar mañana?</span><span class="cas" id="cas">hola estás libre para almorzar mañana?</span></span></div></div>
+          </div></div>
+        </div>
+
+        <!-- 5 · Manos libres -->
+        <div class="shot" id="s-hands">
+          <div class="keyshadow" style="left:140px;top:560px"></div>
+          <div class="keywrap" style="left:40px;top:150px"><div class="key" id="key2"><div class="top"><b>fn</b><div class="ring" id="ring"></div></div></div></div>
+          <div class="htitle" id="htitle"><span class="word">Manos&nbsp;</span><span class="word">libres</span></div>
+          <div class="hsub" id="hsub">Doble toque para empezar, otro toque para terminar</div>
+          <div class="mini" id="hpill" style="left:1016px;top:690px"><div class="pillbg"></div><div class="bars" id="hbars"></div></div>
+        </div>
+
+        <!-- 6 · Modo comando -->
+        <div class="shot" id="s-cmd">
+          <div class="feat cmd" id="fcmd"><div class="k">Modo comando</div><div class="s">Selecciona un texto y dile qué hacer con él</div></div>
+          <div class="tilt" style="left:400px;top:230px;width:1160px;height:600px;transform:perspective(2200px) rotateY(12deg) rotateX(8deg)"><div class="win" id="nwin">
+            <div class="bar" style="background:#F2C94C;border-color:#E0B53A"><i></i><i></i><i></i><span style="color:#5A4A12">Notas</span></div>
+            <div class="nh">Para el equipo</div>
+            <div id="long">
+              <div class="nl"><div class="hl"></div><span>Te escribo para contarte que la reunión de mañana</span></div>
+              <div class="nl"><div class="hl"></div><span>se pasa al jueves a las diez, porque varios del</span></div>
+              <div class="nl"><div class="hl"></div><span>equipo no pueden llegar a tiempo y preferimos</span></div>
+              <div class="nl"><div class="hl"></div><span>hacerla con todos.</span></div>
+            </div>
+            <div class="short" id="short"><span class="word">La&nbsp;</span><span class="word">reunión&nbsp;</span><span class="word">de&nbsp;</span><span class="word">mañana&nbsp;</span><span class="word">pasa&nbsp;</span><span class="word">al&nbsp;</span><span class="word">jueves&nbsp;</span><span class="word">a&nbsp;</span><span class="word">las&nbsp;</span><span class="word">10,&nbsp;</span><span class="word">para&nbsp;</span><span class="word">estar&nbsp;</span><span class="word">todos.</span></div>
+          </div></div>
+          <div class="mini cmd" id="cpill" style="left:260px;top:880px"><div class="pillbg"></div><div class="bars" id="cbars"></div></div>
+          <div class="said" id="said"><span class="word">“hazlo&nbsp;</span><span class="word">más&nbsp;</span><span class="word">corto”</span></div>
+        </div>
+
+        <!-- 7 · Transforms -->
+        <div class="shot" id="s-tf">
+          <div class="feat" id="ftf"><div class="k">Transforms</div><div class="s">Control + Command + 1 a 9</div></div>
+          <div class="keyshadow" style="left:640px;top:470px;width:900px"></div>
+          <div class="keywrap" style="left:330px;top:40px;width:1400px;height:800px">
+            <div class="key sm" id="k-ctl" style="left:230px;top:160px"><div class="top"><b>⌃</b></div></div>
+            <div class="key sm" id="k-cmd" style="left:560px;top:250px"><div class="top"><b>⌘</b></div></div>
+            <div class="key sm" id="k-3" style="left:890px;top:340px"><div class="top"><b>3</b></div></div>
+          </div>
+          <div class="sent" id="es"><span class="word">La&nbsp;</span><span class="word">reunión&nbsp;</span><span class="word">de&nbsp;</span><span class="word">mañana&nbsp;</span><span class="word">pasa&nbsp;</span><span class="word">al&nbsp;</span><span class="word">jueves&nbsp;</span><span class="word">a&nbsp;</span><span class="word">las&nbsp;</span><span class="word">10.</span></div>
+          <div class="sent" id="en"><span class="word">Tomorrow’s&nbsp;</span><span class="word">meeting&nbsp;</span><span class="word">moves&nbsp;</span><span class="word">to&nbsp;</span><span class="word">Thursday&nbsp;</span><span class="word">at&nbsp;</span><span class="word">10.</span></div>
+          <div class="chip" id="tchip"><b>⌃⌘3</b> · Al inglés · Traduce manteniendo el tono</div>
+        </div>
+
+        <!-- 8 · Contexto de pantalla -->
+        <div class="shot" id="s-ctx">
+          <div class="feat" id="fctx"><div class="k">Contexto de pantalla</div><div class="s">Reconoce nombres y términos de la ventana</div></div>
+          <div class="tilt" style="left:380px;top:230px;width:1160px;height:620px;transform:perspective(2200px) rotateY(-12deg) rotateX(8deg)"><div class="win">
+            <div class="bar who"><i></i><i></i><i></i><span>Mensajes · <b id="itz">Itziar</b></span></div>
+            <div class="chat"><div><span class="bub in">¡Ya te mandé el presupuesto!</span></div></div>
+            <div class="field"><span class="raw" id="raw"><span class="word">gracias&nbsp;</span><span class="word">isiar</span></span><span class="fin" id="fin">Gracias, <span class="n" id="fn2">Itziar</span></span></div>
+          </div></div>
+          <div class="mini" id="xpill" style="left:810px;top:900px"><div class="pillbg"></div><div class="bars" id="xbars"></div></div>
+        </div>
+
+        <!-- 9 · Privada -->
+        <div class="shot" id="s-priv">
+          <div class="screen"><div class="bars" id="pbars"></div></div>
+          <div class="base"></div>
+          <div class="ptitle" id="ptitle"><span class="word">Tu&nbsp;</span><span class="word">voz&nbsp;</span><span class="word">no&nbsp;</span><span class="word">sale&nbsp;</span><span class="word">de&nbsp;</span><span class="word">tu&nbsp;</span><span class="word">Mac<span class="p">.</span></span></div>
+          <div class="psub" id="psub">Motor de voz de Apple o whisper.cpp</div>
+        </div>
+
+        <!-- 10 · Montaje, cortes de 3, 3, 4 y 6 tiempos -->
+        <div class="shot" id="s-mont">
+          <div class="mcut" id="m0"><div class="feat"><div class="k">Estadísticas</div></div><div class="mbig" id="count">63</div><div class="munit">/ 100 palabras</div></div>
+          <div class="mcut" id="m1"><div class="feat"><div class="k">Diccionario</div></div>
+            <div class="term" style="left:260px;top:300px;font-size:150px">Itziar</div>
+            <div class="term" style="left:1080px;top:250px;font-size:110px">whisper.cpp</div>
+            <div class="term" style="left:640px;top:520px;font-size:170px">Supabase</div>
+            <div class="term" style="left:220px;top:700px;font-size:90px">OKR</div>
+            <div class="term" style="left:1340px;top:640px;font-size:120px">Figma</div>
+            <div class="term" style="left:760px;top:820px;font-size:80px">Raycast</div>
+          </div>
+          <div class="mcut" id="m2"><div class="feat"><div class="k">Snippets</div></div><div class="msnip">“mi firma”</div><div class="mexp" id="mexp">Un abrazo,<br>Lucía Fernández</div></div>
+          <div class="mcut" id="m3"><div class="mline"><span class="word">Desde&nbsp;</span><span class="word">Raycast&nbsp;</span><span class="word">o&nbsp;</span><span class="word">Atajos</span></div></div>
+        </div>
+
+        <!-- 11 · Cierre -->
+        <div class="shot" id="s-end">
+          <div class="glow" id="glow"></div>
+          <div class="titlewrap" id="titlewrap"><div class="title" id="title"><span class="word">Dicta&nbsp;</span><span class="word">en&nbsp;</span><span class="word o">cualquier&nbsp;</span><span class="word">app</span><br><span class="word">de&nbsp;</span><span class="word">tu&nbsp;</span><span class="word">Mac<span class="p">.</span></span></div></div>
+          <div class="brand" id="brand"><img src="assets/img/icon.png" alt="" id="icon" /><span id="wordmark">Hablapp</span></div>
+          <div class="ctawrap"><span class="cta" id="cta">Descargar para Mac</span></div>
+          <div class="fine" id="fine">Gratis y de código abierto · macOS 26 · Apple Silicon</div>
+          <div class="url" id="url">briascoi.github.io/hablapp</div>
+        </div>
+
+        <div class="flare" id="flare"></div>
+        <div class="grain"></div>
+        <div id="black"></div>
+      </div>
+
+      <audio id="music" class="clip" src="assets/audio/mix-largo.wav" data-start="0" data-duration="72" data-track-index="10" data-volume="1"></audio>
+    </div>
+    <script>
+      // Grilla medida en macro-l2.mp3: 86 BPM, downbeats en 2,52 + 2,789·k. build-mix-largo.sh usa la misma.
+      // Grilla de macro-l4: 126 BPM, compás de 1,905 s, downbeat 0 en 1,453 s; frases de 8 compases (cambian en 8, 16, 24 y 32).
+      const BAR = 1.905, BEAT = BAR / 4, B = (k) => 1.453 + k * BAR;
+      const END = 72;
+      const q = (s) => document.querySelector(s);
+      const qa = (s) => [...document.querySelectorAll(s)];
+      const tl = gsap.timeline({ paused: true });
+      const show = (el, at) => tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.01, immediateRender: false }, at);
+      const hide = (el, at) => tl.fromTo(el, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.01, immediateRender: false }, at);
+      const drive = (at, dur, fn) => {
+        const o = { t: 0 };
+        fn(0);
+        tl.fromTo(o, { t: 0 }, { t: dur, duration: dur, ease: "none", immediateRender: false, onUpdate: () => fn(o.t) }, at);
+      };
+      // Onda de voz determinista: sílabas, nunca Math.random.
+      const wave = (bars, base, t, amp) => bars.forEach((b, i) => {
+        const syl = Math.abs(Math.sin(t * 8.3 + i * 0.9) * Math.sin(t * 3.1 + i * 1.7));
+        b.style.height = Math.max(base[i] * 0.16, base[i] * (0.22 + 0.78 * syl) * amp) + "px";
+      });
+      const makeBars = (sel, n) => { const el = q(sel); el.innerHTML = "<i></i>".repeat(n); return [...el.children]; };
+      const BIG = [46, 78, 120, 64, 150, 98, 170, 110, 72, 128, 58];
+      const SMALL = BIG.map((h) => h * 0.36);
+      // Una ráfaga de palabras que sale de la profundidad.
+      const words = (sel, at, step, from = { opacity: 0, y: 24, filter: "blur(10px)" }) =>
+        tl.fromTo(sel, from, { opacity: 1, y: 0, z: 0, x: 0, filter: "blur(0px)", duration: 0.7, ease: "expo.out", stagger: step }, at);
+
+      // Teclas extruidas: capas de lado, de la sombra al borde iluminado.
+      qa(".key").forEach((key) => {
+        const n = key.classList.contains("sm") ? 9 : 12, dz = key.classList.contains("sm") ? 4 : 5;
+        for (let i = 0; i < n; i++) {
+          const d = document.createElement("div");
+          d.className = "side";
+          const c = (a, b) => Math.round(a + (b - a) * (i / (n - 1)));
+          d.style.background = `rgb(${c(0x6e, 0xc6)},${c(0x3e, 0x75)},${c(0x05, 0x13)})`;
+          d.style.transform = `translateZ(${i * dz}px)`;
+          key.insertBefore(d, key.querySelector(".top"));
+        }
+      });
+      const press = (sel, at, up, down) => {
+        tl.fromTo(sel, { z: up }, { z: down, duration: 0.1, ease: "power4.out", immediateRender: false }, at);
+        tl.fromTo(sel, { z: down }, { z: up, duration: 0.25, ease: "power3.out", immediateRender: false }, at + 0.14);
+      };
+      const flare = (at, peak) => {
+        tl.fromTo("#flare", { opacity: 0 }, { opacity: peak, duration: 0.12, ease: "power2.out", immediateRender: false }, at);
+        tl.fromTo("#flare", { opacity: peak }, { opacity: 0, duration: 0.8, ease: "sine.out", immediateRender: false }, at + 0.12);
+      };
+
+      const SHOTS = ["#s-pill", "#s-mail", "#s-style", "#s-hands", "#s-cmd", "#s-tf", "#s-ctx", "#s-priv", "#s-mont", "#s-end"];
+      SHOTS.forEach((s) => gsap.set(s, { autoAlpha: 0 }));
+      gsap.set("#flare", { opacity: 0 });
+
+      const P = B(1), R = B(2), L = B(4);
+      // La voz dicta: inicio de cada toma (los mismos que build-mix-largo.sh) y arranque de cada palabra (voces/*.json).
+      const VH = R + 0.15, VC = B(14), VG = B(21) + 0.6;
+      const HOLA = [0, 0.64, 1.12, 1.48, 1.68, 2.08], CORTO = [0, 0.48, 0.76], GRACIAS = [0, 0.68];
+      // Cada palabra aparece cuando la voz la dice.
+      const spoken = (sel, at, onsets, from) => qa(sel).forEach((w, i) =>
+        tl.fromTo(w, from, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, at + onsets[i]));
+
+      /* Luz global: un solo recorrido continuo que acompaña a cada plano */
+      const LP = [[0, 760, 980, 0.7], [P, 900, 760, 1], [P + 1.3, 560, 560, 1], [L, 1180, 520, 1], [B(7), 960, 420, 1.1], [B(10), 520, 600, 1],
+        [B(13), 1300, 420, 1], [B(17), 760, 520, 1.1], [B(21), 1250, 560, 1], [B(24), 960, 520, 1.25], [B(28), 960, 600, 1], [B(32), 960, 600, 1.25]];
+      tl.fromTo("#light", { x: 760, y: 980, scale: 0.7, opacity: 0 }, { x: 900, y: 760, scale: 1, opacity: 1, duration: P, ease: "power2.out" }, 0);
+      LP.slice(1, -1).forEach(([t, x, y, s], i) => {
+        const [t2, x2, y2, s2] = LP[i + 2];
+        tl.fromTo("#light", { x, y, scale: s }, { x: x2, y: y2, scale: s2, duration: Math.min(2.4, t2 - t), ease: "power2.inOut", immediateRender: false }, t);
+      });
+      // Fundidos largos y en sine: con menos tiempo la luminancia salta más de 1,5 por cuadro.
+      tl.fromTo("#black", { opacity: 1 }, { opacity: 0, duration: 2.0, ease: "sine.inOut" }, 0);
+
+      /* 1 · fn en macro */
+      tl.fromTo("#s-key", { scale: 1.0 }, { scale: 1.09, duration: P + 0.2, ease: "sine.inOut" }, 0);
+      tl.fromTo("#cap .word", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.09 }, 0.35);
+      tl.fromTo("#key1 .top", { z: 64 }, { z: 34, duration: 0.1, ease: "power4.out" }, P);
+      flare(P, 0.6);
+      tl.fromTo("#s-key", { x: 0 }, { x: -1920, duration: 0.32, ease: "power3.in", immediateRender: false }, P + 0.14);
+      hide("#s-key", P + 0.48);
+
+      /* 2 · La píldora crece y la frase sale volando hacia la profundidad */
+      const bars = makeBars("#bars", 11);
+      show("#s-pill", P + 0.22);
+      tl.fromTo("#s-pill", { x: 613 + 1920, y: 202, scale: 1.5 }, { x: 613, y: 202, scale: 1.5, duration: 0.42, ease: "power3.out", immediateRender: false }, P + 0.22);
+      tl.fromTo("#pillbg", { scaleX: 0.16, scaleY: 0.12 }, { scaleX: 1, scaleY: 1, duration: 0.6, ease: "expo.out" }, P + 0.5);
+      tl.fromTo("#pillshadow", { opacity: 0, scaleX: 0.2 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: "expo.out" }, P + 0.5);
+      tl.fromTo("#bars", { opacity: 0, scaleY: 0.2 }, { opacity: 1, scaleY: 1, duration: 0.45, ease: "back.out(1.6)" }, P + 0.62);
+      drive(P + 0.62, L - P - 0.62, (t) => wave(bars, BIG, t + P, Math.min(1, t / 0.4)));
+      tl.fromTo("#s-pill", { x: 613, y: 202, scale: 1.5 }, { x: 0, y: 0, scale: 1, duration: 1.5, ease: "power3.inOut", immediateRender: false }, R - 0.1);
+      // La cámara acompaña a las palabras mientras se dictan, hasta dejar la frase entera en cuadro.
+      tl.fromTo("#s-pill", { x: 0, scale: 1 }, { x: -620, scale: 0.9, duration: L - R - 1.4, ease: "sine.inOut", immediateRender: false }, R + 1.4);
+      const rw = qa("#ribbon .word");
+      const endBlur = [0, 0, 0, 3, 3, 6], endOp = [1, 1, 1, 0.6, 0.6, 0.35];
+      rw.forEach((w, i) => {
+        tl.fromTo(w, { x: -160, opacity: 0, scale: 0.6, filter: "blur(16px)" },
+          { x: 0, opacity: endOp[i], scale: 1, filter: `blur(${endBlur[i]}px)`, duration: 0.8, ease: "expo.out" }, VH + HOLA[i]);
+      });
+      // Rack focus antes del corte: lo lejano entra en foco.
+      tl.fromTo(rw.slice(3), { opacity: (i) => endOp[i + 3], filter: (i) => `blur(${endBlur[i + 3]}px)` },
+        { opacity: 1, filter: "blur(0px)", duration: 0.9, ease: "power2.inOut", immediateRender: false }, L - 1.3);
+      hide("#s-pill", L);
+
+      /* 3 · Aterriza en Mail cuando sube la música */
+      const S5 = B(7);
+      show("#s-mail", L);
+      tl.fromTo("#mailwin", { scale: 1.08, x: 50 }, { scale: 1, x: 0, duration: S5 - L, ease: "power2.out" }, L);
+      tl.fromTo("#mailbody .word", { opacity: 0, y: -36, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out", stagger: 0.045 }, L + 0.05);
+      drive(L, S5 - L, (t) => (q("#caret").style.opacity = t < 0.35 ? 0 : Math.floor(t * 2.4) % 2 ? 0.15 : 1));
+      tl.fromTo("#mailfoot", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, L + 0.6);
+      hide("#s-mail", S5);
+
+      /* 4 · Estilo: en el chat se caen los signos y la mayúscula */
+      const S7 = B(10);
+      show("#s-style", S5);
+      tl.fromTo("#s-style", { scale: 1.12, x: 140 }, { scale: 1, x: -40, duration: S7 - S5, ease: "power3.out" }, S5);
+      tl.fromTo("#capf", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, S5 + 0.15);
+      tl.fromTo("#cwin", { opacity: 0.35 }, { opacity: 1, duration: 1.6, ease: "sine.inOut" }, S5 + BEAT);
+      // La misma frase llega formal a la burbuja y se suelta: caen la coma y el ¿, la H baja a minúscula.
+      tl.fromTo("#cbub", { scaleX: 0.2, scaleY: 0.4, opacity: 0 }, { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.6, ease: "expo.out" }, S5 + BEAT * 2);
+      tl.fromTo("#cbub .fall", { y: 0, rotation: 0, opacity: 1 }, { y: 300, rotation: (i) => (i ? -70 : 80), opacity: 0, duration: 0.9, ease: "power2.in", stagger: 0.1 }, B(8.5));
+      tl.fromTo("#cbub .fx", { opacity: 1, filter: "blur(0px)" }, { opacity: 0, filter: "blur(6px)", duration: 0.35, ease: "power2.in" }, B(8.5) + 0.15);
+      tl.fromTo("#cas", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.45, ease: "power2.out" }, B(8.5) + 0.3);
+      tl.fromTo("#capc", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, B(8.5));
+      hide("#s-style", S7);
+
+      /* 5 · Manos libres: doble toque y la píldora sigue sola */
+      const S9 = B(13);
+      show("#s-hands", S7);
+      tl.fromTo("#s-hands", { scale: 1.18 }, { scale: 1, duration: S9 - S7, ease: "expo.out" }, S7);
+      tl.fromTo("#key2 .top", { z: 64 }, { z: 64, duration: 0.01 }, S7 - 0.01);
+      press("#key2 .top", S7, 64, 34);
+      press("#key2 .top", S7 + BEAT / 2, 64, 34);
+      flare(S7 + BEAT / 2, 0.3);
+      tl.fromTo("#ring", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, S7 + BEAT / 2 + 0.05);
+      press("#key2 .top", S9 - BEAT, 64, 34);
+      tl.fromTo("#ring", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power2.in", immediateRender: false }, S9 - BEAT + 0.05);
+      words("#htitle .word", S7 + 0.35, 0.12, { opacity: 0, z: -400, filter: "blur(16px)" });
+      tl.fromTo("#hsub", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, S7 + 0.9);
+      const hb = makeBars("#hbars", 11);
+      tl.fromTo("#hpill", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, S7 + BEAT / 2 + 0.1);
+      drive(S7 + BEAT / 2, S9 - S7 - BEAT / 2, (t) => wave(hb, SMALL, t + S7, t > S9 - S7 - BEAT * 1.5 ? 0.2 : Math.min(1, t / 0.3)));
+      hide("#s-hands", S9);
+
+      /* 6 · Modo comando: seleccionar, decir, y el párrafo se comprime */
+      const S12 = B(17), CUT = VC + BEAT * 3;
+      show("#s-cmd", S9);
+      tl.fromTo("#nwin", { scale: 1.06, x: -40 }, { scale: 1, x: 0, duration: S12 - S9, ease: "power2.out" }, S9);
+      tl.fromTo("#fcmd", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, S9 + 0.3);
+      tl.fromTo("#long .hl", { scaleX: 0 }, { scaleX: 1, duration: 0.32, ease: "power2.inOut", stagger: 0.24 }, S9 + 0.4);
+      const cb = makeBars("#cbars", 11);
+      tl.fromTo("#cpill", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, S9 + 1.6);
+      drive(S9 + 1.6, CUT - S9 - 1.6, (t) => wave(cb, SMALL, t + S9, Math.min(1, t / 0.3)));
+      spoken("#said .word", VC, CORTO, { opacity: 0, x: -60, filter: "blur(12px)" });
+      tl.fromTo("#cpill", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, CUT);
+      tl.fromTo("#said", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power2.in" }, CUT);
+      tl.fromTo("#long .nl", { scaleY: 1, opacity: 1, filter: "blur(0px)" }, { scaleY: 0.2, opacity: 0, filter: "blur(10px)", duration: 0.45, ease: "power3.in", stagger: 0.05 }, CUT);
+      words("#short .word", CUT + 0.3, 0.05, { opacity: 0, y: 40, filter: "blur(12px)" });
+      hide("#s-cmd", S12);
+
+      /* 7 · Transforms: ⌃⌘3 y la frase gira al inglés */
+      const S13 = B(19), S15 = B(21);
+      show("#s-tf", S12);
+      tl.fromTo("#s-tf", { scale: 1.1, y: 30 }, { scale: 1, y: 0, duration: S15 - S12, ease: "power2.out" }, S12);
+      tl.fromTo("#ftf", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, S12 + 0.3);
+      ["#k-ctl", "#k-cmd", "#k-3"].forEach((k, i) => {
+        tl.fromTo(`${k} .top`, { z: 44 }, { z: 44, duration: 0.01 }, S12);
+        tl.fromTo(k, { opacity: 0, y: -60 }, { opacity: 1, y: 0, duration: 0.8, ease: "expo.out" }, S12 + 0.2 + i * 0.12);
+        tl.fromTo(`${k} .top`, { z: 44 }, { z: 20, duration: 0.1, ease: "power4.out", immediateRender: false }, S13 - (2 - i) * BEAT / 4);
+      });
+      flare(S13, 0.3);
+      words("#es .word", S12 + 0.6, 0.05);
+      tl.fromTo("#es .word", { rotationX: 0, opacity: 1 }, { rotationX: -90, opacity: 0, duration: 0.35, ease: "power3.in", stagger: 0.04, immediateRender: false }, S13);
+      tl.fromTo("#en .word", { rotationX: 90, opacity: 0 }, { rotationX: 0, opacity: 1, duration: 0.6, ease: "back.out(1.4)", stagger: 0.05 }, S13 + 0.3);
+      tl.fromTo("#tchip", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, S13 + 0.6);
+      hide("#s-tf", S15);
+
+      /* 8 · Contexto: el nombre de la ventana corrige lo dictado */
+      const S16 = B(22.5), S17 = B(24);
+      show("#s-ctx", S15);
+      tl.fromTo("#s-ctx", { scale: 1.08, x: 60 }, { scale: 1, x: 0, duration: S17 - S15, ease: "power2.out" }, S15);
+      tl.fromTo("#fctx", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, S15 + 0.3);
+      const xb = makeBars("#xbars", 11);
+      tl.fromTo("#xpill", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, S15 + 0.5);
+      drive(S15 + 0.5, S16 - S15 - 0.5, (t) => wave(xb, SMALL, t + S15, Math.min(1, t / 0.3)));
+      tl.fromTo("#xpill", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, S16);
+      spoken("#raw .word", VG, GRACIAS, { opacity: 0, filter: "blur(8px)" });
+      tl.fromTo("#itz", { backgroundColor: "rgba(245,166,71,0)" }, { backgroundColor: "rgba(245,166,71,.45)", duration: 0.4, ease: "power2.out" }, S16 - BEAT);
+      tl.fromTo("#raw", { opacity: 1, filter: "blur(0px)" }, { opacity: 0, filter: "blur(10px)", duration: 0.35, ease: "power2.in", immediateRender: false }, S16);
+      tl.fromTo("#fin", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, S16 + 0.1);
+      tl.fromTo("#fn2", { backgroundColor: "rgba(245,166,71,.45)" }, { backgroundColor: "rgba(245,166,71,0)", duration: 1.6, ease: "sine.inOut" }, S16 + 0.6);
+      hide("#s-ctx", S17);
+
+      /* 9 · Privada: la voz queda dentro de la Mac; arranca con la tercera frase de la música */
+      const S19 = B(28);
+      show("#s-priv", S17);
+      tl.fromTo("#s-priv", { scale: 1.0 }, { scale: 1.06, duration: S19 - S17, ease: "sine.inOut" }, S17);
+      const pb = makeBars("#pbars", 11);
+      drive(S17, S19 - S17, (t) => wave(pb, BIG.map((h) => h * 2.2), t * 0.6 + S17, Math.min(1, t / 0.8)));
+      words("#ptitle .word", S17 + 0.4, 0.1, { opacity: 0, z: -400, filter: "blur(16px)" });
+      tl.fromTo("#psub", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, S17 + 1.4);
+      hide("#s-priv", S19);
+
+      /* 10 · Montaje: cortes en tiempos que llegan al cambio de frase del cierre, cada uno lo que su texto necesita para leerse dos veces */
+      const MB = [0, 3, 6, 10, 16].map((b) => S19 + b * BEAT), S21 = MB[4];
+      show("#s-mont", MB[0]);
+      ["#m1", "#m2", "#m3"].forEach((m) => gsap.set(m, { autoAlpha: 0 }));
+      [0, 1, 2, 3].forEach((i) => {
+        if (i > 0) { hide(`#m${i - 1}`, MB[i]); show(`#m${i}`, MB[i]); }
+        tl.fromTo(`#m${i}`, { scale: 1.14 }, { scale: 1, duration: MB[i + 1] - MB[i], ease: "expo.out" }, MB[i]);
+      });
+      drive(MB[0], MB[1] - MB[0], (t) => (q("#count").textContent = Math.round(63 + 37 * (1 - Math.pow(1 - Math.min(1, t / 1.1), 3)))));
+      tl.fromTo("#m1 .term", { z: -600, opacity: 0, filter: "blur(14px)" }, { z: 0, opacity: (i) => [1, 0.55, 1, 0.45, 0.7, 0.4][i], filter: (i) => `blur(${[0, 3, 0, 4, 2, 5][i]}px)`, duration: 0.7, ease: "expo.out", stagger: 0.05 }, MB[1]);
+      tl.fromTo("#mexp", { opacity: 0, y: 30, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, MB[2] + 0.2);
+      words("#m3 .word", MB[3], 0.06, { opacity: 0, z: -300, filter: "blur(12px)" });
+      hide("#s-mont", S21);
+
+      /* 11 · Cierre: el título sale de la profundidad, la onda queda como luz */
+      const S22 = B(33) + BEAT;
+      show("#s-end", S21);
+      const glow = makeBars("#glow", 11);
+      drive(S21, END - S21, (t) => wave(glow, BIG.map((h) => h * 3.4), t * 0.5 + S21, 1));
+      tl.fromTo("#title .word", { opacity: 0, z: -520, filter: "blur(18px)" }, { opacity: 1, z: 0, filter: "blur(0px)", duration: 1.0, ease: "expo.out", stagger: BEAT / 4 }, S21);
+      tl.fromTo("#titlewrap", { y: 0 }, { y: -170, duration: 0.9, ease: "power3.inOut", immediateRender: false }, S22 - 0.3);
+      tl.fromTo("#icon", { opacity: 0, scale: 0.4, rotation: -10 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.8, ease: "back.out(1.5)" }, S22);
+      tl.fromTo("#wordmark", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.7, ease: "power3.out" }, S22 + 0.15);
+      tl.fromTo("#cta", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.7, ease: "back.out(1.6)" }, S22 + BEAT);
+      tl.fromTo("#fine", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, S22 + BEAT * 2);
+      tl.fromTo("#url", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, S22 + BEAT * 2.5);
+      tl.fromTo("#black", { opacity: 0 }, { opacity: 1, duration: 1.6, ease: "sine.inOut", immediateRender: false }, END - 1.6);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
