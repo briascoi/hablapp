@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es"
+  data-composition-variables='[
+    {"id":"color-ground","type":"color","label":"Fondo","default":"#F3F1EC"},
+    {"id":"color-ink","type":"color","label":"Texto","default":"#1C1B1A"},
+    {"id":"color-accent","type":"color","label":"Acento","default":"#7B4FC0"},
+    {"id":"color-fn","type":"color","label":"Naranja fn","default":"#F4A647"}
+  ]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #F3F1EC; }
+      #root { position: relative; width: 100%; height: 100%; }
+      #bg { position: absolute; inset: 0; background: #F3F1EC; }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-7u64" id="root" data-composition-id="main" data-start="0" data-duration="74"
+      data-width="1920" data-height="1080" data-motion-blur="on">
+      <div data-hf-id="hf-v3rw" id="bg" class="clip" data-start="0" data-duration="74" data-track-index="0"></div>
+
+      <!-- Escenas cortadas en downbeats (118 BPM, compás 2.0335 s). -->
+      <div data-hf-id="hf-mn6c" id="gancho" data-composition-id="gancho" data-composition-src="compositions/gancho.html"
+        data-start="0" data-duration="16.305" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-wtm6" id="revela" data-composition-id="revela" data-composition-src="compositions/revela.html"
+        data-start="16.305" data-duration="6.1" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-rciz" id="estilo" data-composition-id="estilo" data-composition-src="compositions/estilo.html"
+        data-start="22.405" data-duration="8.14" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-itqm" id="manos" data-composition-id="manos" data-composition-src="compositions/manos.html"
+        data-start="30.545" data-duration="4.06" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-frlm" id="privada" data-composition-id="privada" data-composition-src="compositions/privada.html"
+        data-start="34.605" data-duration="6.11" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-r2yy" id="comando" data-composition-id="comando" data-composition-src="compositions/comando.html"
+        data-start="40.715" data-duration="6.1" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-r54h" id="transforms" data-composition-id="transforms" data-composition-src="compositions/transforms.html"
+        data-start="46.815" data-duration="8.14" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-4uoc" id="contexto" data-composition-id="contexto" data-composition-src="compositions/contexto.html"
+        data-start="54.955" data-duration="4.03" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-ulaf" id="montaje" data-composition-id="montaje" data-composition-src="compositions/montaje.html"
+        data-start="58.985" data-duration="4.1" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div data-hf-id="hf-p8pz" id="cierre" data-composition-id="cierre" data-composition-src="compositions/cierre.html"
+        data-start="63.085" data-duration="10.915" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+
+      <audio data-hf-id="hf-d2fx" id="music" class="clip" src="assets/audio/music.mp3" data-start="0" data-duration="73.93"
+        data-track-index="10" data-volume="0.78"></audio>
+      <!-- Efectos en cada acción visible (assets/audio/build-sfx.py), un frame después del cuadro. -->
+      <audio id="sfx" class="clip" src="assets/audio/sfx.wav" data-start="0" data-duration="73.93"
+        data-track-index="11" data-volume="1"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

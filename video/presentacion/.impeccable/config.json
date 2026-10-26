@@ -1,0 +1,80 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "compositions/estilo.html"
+        ],
+        "createdAt": "2026-10-24T22:17:53.049Z",
+        "reason": "agent: #root es el cuadro de video 1920x1080, el recorte es intencional"
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "compositions/privada.html"
+        ],
+        "createdAt": "2026-10-24T22:19:18.116Z",
+        "reason": "agent: la pantalla del Mac recorta las ondas a propósito (no salen del Mac)"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-10-24T22:49:33.797Z",
+        "reason": "Claude: #F3F1EC is Hablapp's brand background, defined in app/Sources/Theme.swift and docs/style.css"
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "direccion/a-macro.html"
+        ],
+        "createdAt": "2026-10-24T23:03:59.440Z",
+        "reason": "Claude: overflow hidden recorta el cuadro de video 1920x1080 a propósito"
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "direccion/b-poster.html"
+        ],
+        "createdAt": "2026-10-24T23:04:01.995Z",
+        "reason": "Claude: overflow hidden recorta el cuadro de video 1920x1080 a propósito"
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "direccion/c-escritorio.html"
+        ],
+        "createdAt": "2026-10-24T23:04:04.362Z",
+        "reason": "Claude: overflow hidden recorta el cuadro de video 1920x1080 a propósito"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "direccion/c-escritorio.html"
+        ],
+        "createdAt": "2026-10-24T23:04:06.316Z",
+        "reason": "Claude: el anillo blanco de 3 px es el borde real de la píldora de FlowBar.swift"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "direccion/a-macro.html"
+        ],
+        "createdAt": "2026-10-24T23:04:08.662Z",
+        "reason": "Claude: el anillo blanco es el borde real de la píldora de FlowBar.swift; los halos de color ya se quitaron"
+      }
+    ]
+  }
+}

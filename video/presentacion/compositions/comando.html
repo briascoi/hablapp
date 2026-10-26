@@ -1,0 +1,85 @@
+<template>
+  <link rel="stylesheet" href="assets/hb.css" />
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: var(--bg); font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: antialiased; }
+    #c-t { position: absolute; left: 0; right: 0; top: 64px; text-align: center; font-size: 110px; line-height: 1; }
+    #c-sub { position: absolute; left: 0; right: 0; top: 196px; text-align: center; font: 400 44px var(--sans); color: var(--muted); }
+    #c-t .word, #c-sub .word { opacity: 0; }
+    #c-sub .word:nth-last-child(-n+5) { color: var(--accent); }
+    #c-win { left: 210px; top: 300px; width: 1500px; height: 560px; }
+    #c-win h3 { font: 400 56px var(--serif); padding: 40px 56px 0; }
+    .c-body { position: absolute; left: 56px; right: 56px; top: 196px; font: 400 46px/1.5 var(--sans); }
+    #c-old .w { border-radius: 4px; }
+    #c-new { opacity: 0; }
+    #c-new .word { opacity: 0; }
+    #c-key { position: absolute; left: 610px; top: 951px; height: 66px; min-width: 92px; font: 600 34px var(--sans); border-radius: 16px; box-shadow: 0 7px 0 var(--fn-edge); opacity: 0; }
+    #c-rec, #c-proc, #c-live { opacity: 0; }
+    #c-grad { position: absolute; inset: 0; background: linear-gradient(120deg, #1F3B3E 0%, #2F5D62 55%, #6B4A33 100%); }
+  </style>
+  <div data-hf-id="hf-jdci" id="root" data-composition-id="comando" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-a3c5" id="c-t" class="serif">Modo comando</div>
+    <div data-hf-id="hf-nvsw" id="c-sub">Selecciona un texto y dile qué hacer con él</div>
+
+    <div data-hf-id="hf-o4we" id="c-win" class="win">
+      <div data-hf-id="hf-ufsv" class="bar"><b data-hf-id="hf-xujp"></b><b data-hf-id="hf-ey49"></b><b data-hf-id="hf-g51c"></b><span data-hf-id="hf-es6a">Notas</span></div>
+      <h3 data-hf-id="hf-gl8k">Para el equipo</h3>
+      <div data-hf-id="hf-348q" class="c-body" id="c-old">Te escribo para contarte que la reunión de mañana se pasa al jueves a las diez, porque varios del equipo no pueden llegar a tiempo y preferimos hacerla con todos.</div>
+      <div data-hf-id="hf-3rxt" class="c-body" id="c-new">La reunión de mañana pasa al jueves a las 10, para estar todos.</div>
+    </div>
+
+    <div data-hf-id="hf-zsza" id="c-key" class="key fn">fn</div>
+    <div data-hf-id="hf-oa7t" class="ldock"><div data-hf-id="hf-hzdq" id="c-live" class="live"><span data-hf-id="hf-3kmo" id="c-livetxt"></span></div></div>
+    <div data-hf-id="hf-pz3p" class="dock">
+      <div data-hf-id="hf-oj96" id="c-dash" class="dash"></div>
+      <div data-hf-id="hf-mbwj" id="c-rec" class="pill cmd"><div data-hf-id="hf-v9k6" class="wave" id="c-wave"></div></div>
+      <div data-hf-id="hf-6tmu" id="c-proc" class="pill cmd" style="padding:0 45px;"><div data-hf-id="hf-zx1w" class="dots"><i data-hf-id="hf-wt6k"></i><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-y7e5"></i></div></div>
+    </div>
+    <div data-hf-id="hf-ox25" id="c-grad"></div>
+    <div data-hf-id="hf-h60x" class="grain"></div>
+  </div>
+  <script src="assets/hb.js"></script>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      const $ = (s) => document.querySelector(s);
+      const EDGE = "#B86E10", SOFT = "#E4D6F8";
+
+      // Entrada: seguimos dentro de la pantalla del Mac.
+      tl.fromTo("#c-win", { scale: 1.2, filter: "blur(14px)" }, { scale: 1, filter: "blur(0px)", duration: 0.55, ease: "expo.out" }, 0);
+      tl.fromTo(HB.words($("#c-t")), { opacity: 0, scale: 1.3, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, stagger: 0.1, ease: "expo.out" }, 0.15);
+      tl.fromTo(HB.words($("#c-sub")), { opacity: 0, y: 30, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, y: 0, clipPath: "inset(0 0 0% 0)", duration: 0.4, stagger: 0.04, ease: "power4.out" }, 0.5);
+
+      // Selección que avanza palabra por palabra, como un arrastre.
+      const old = $("#c-old");
+      old.innerHTML = old.textContent.trim().split(/\s+/).map((w) => `<span class="w">${w} </span>`).join("");
+      const ws = [...old.querySelectorAll(".w")];
+      HB.drive(tl, 0.8, 0.75, (t) => {
+        const k = Math.round((t / 0.7) * ws.length);
+        ws.forEach((w, i) => (w.style.backgroundColor = i < k ? SOFT : "transparent"));
+      });
+
+      // fn con texto seleccionado: la píldora se vuelve lavanda y escucha la orden.
+      tl.fromTo("#c-key", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)", immediateRender: false }, 1.4);
+      tl.fromTo("#c-key", { y: 0, boxShadow: `0 7px 0 ${EDGE}` }, { y: 6, boxShadow: `0 1px 0 ${EDGE}`, duration: 0.07, ease: "power2.out", immediateRender: false }, 1.6);
+      const record = HB.pill(tl, { rec: "#c-rec", proc: "#c-proc", dash: "#c-dash", wave: "#c-wave", live: "#c-live", livetxt: "#c-livetxt" });
+      record(1.6, 1.1, { raw: "hazlo más corto", proc: 1.15 });
+      tl.to("#c-key", { y: 0, boxShadow: `0 7px 0 ${EDGE}`, duration: 0.12, ease: "back.out(2)" }, 2.7);
+      tl.to("#c-key", { opacity: 0, scale: 0.6, duration: 0.2, ease: "power3.in" }, 4.6);
+
+      // 4.07: el párrafo se reescribe.
+      tl.to(ws, { opacity: 0, filter: "blur(8px)", y: -16, duration: 0.18, stagger: 0.008, ease: "power3.in" }, 3.78);
+      tl.set("#c-new", { opacity: 1 }, 4.0);
+      const nw = HB.words($("#c-new"));
+      tl.fromTo(nw, { opacity: 0, scale: 1.25, filter: "blur(10px)", backgroundColor: SOFT }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, stagger: 0.045, ease: "expo.out" }, 4.07);
+      tl.to(nw, { backgroundColor: "rgba(228,214,248,0)", duration: 0.6, ease: "power2.inOut" }, 4.9);
+
+      // Salida: el degradé de Transforms entra desde la derecha.
+      tl.to(["#c-t", "#c-sub"], { x: -500, opacity: 0, duration: 0.45, ease: "power3.in" }, 5.6);
+      tl.to("#c-win", { x: -700, duration: 0.5, ease: "power4.inOut" }, 5.6);
+      tl.to("#c-dash", { opacity: 0, duration: 0.2 }, 5.6);
+      tl.fromTo("#c-grad", { xPercent: 100 }, { xPercent: 0, duration: 0.5, ease: "power4.inOut" }, 5.6);
+
+      window.__timelines["comando"] = tl;
+    })();
+  </script>
+</template>

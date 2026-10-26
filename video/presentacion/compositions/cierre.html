@@ -1,0 +1,91 @@
+<template>
+  <link rel="stylesheet" href="assets/hb.css" />
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: var(--bg); font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: antialiased; }
+    #z-all { position: absolute; inset: 0; }
+    #z-stage { position: absolute; inset: 0; display: grid; place-items: center; }
+    #z-box { position: relative; width: 594px; height: 212px; border-radius: 106px; background: rgba(0,0,0,.9); box-shadow: 0 0 0 6px rgba(255,255,255,.18), 0 20px 50px rgba(0,0,0,.25); display: flex; align-items: center; justify-content: center; opacity: 0; }
+    #z-grad { position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, #2B2621, #171414); opacity: 0; }
+    #z-bars { position: relative; display: flex; align-items: center; }
+    #z-bars i { display: block; width: 18.75px; height: 25px; margin: 0 9.375px; border-radius: 999px; background: #fff; }
+    #z-word { position: absolute; left: 800px; top: 300px; font-size: 176px; line-height: 1; clip-path: inset(0 100% 0 0); }
+    #z-tag { position: absolute; left: 0; right: 0; top: 560px; text-align: center; font: 400 50px var(--sans); color: var(--muted); }
+    #z-tag .word { opacity: 0; }
+    #z-cta { position: absolute; left: 0; right: 0; top: 690px; display: flex; justify-content: center; opacity: 0; }
+    #z-btn { background: var(--ink); color: #fff; font: 600 46px var(--sans); padding: 30px 66px; border-radius: 999px; }
+    #z-meta { position: absolute; left: 0; right: 0; top: 850px; text-align: center; font: 400 34px var(--sans); color: var(--muted); opacity: 0; }
+    #z-url { position: absolute; left: 0; right: 0; top: 925px; text-align: center; font: 500 38px var(--mono); color: var(--ink); opacity: 0; }
+    #z-cur { position: absolute; left: 0; top: 0; width: 56px; opacity: 0; }
+  </style>
+  <div data-hf-id="hf-n3qp" id="root" data-composition-id="cierre" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-dt6n" id="z-all">
+      <div data-hf-id="hf-r1w0" id="z-stage"><div data-hf-id="hf-sezd" id="z-box"><div data-hf-id="hf-ddwq" id="z-grad"></div><div data-hf-id="hf-7c0k" id="z-bars"></div></div></div>
+      <div data-hf-id="hf-z6ou" id="z-word" class="serif">hablapp</div>
+      <div data-hf-id="hf-ivq3" id="z-tag">Dicta en cualquier app de tu Mac</div>
+      <div data-hf-id="hf-swcw" id="z-cta"><span data-hf-id="hf-ugwa" id="z-btn">Descargar para Mac</span></div>
+      <div data-hf-id="hf-f9d4" id="z-meta">Gratis y de código abierto · macOS 26 · Apple Silicon</div>
+      <div data-hf-id="hf-p2mb" id="z-url">briascoi.github.io/hablapp</div>
+    </div>
+    <svg data-hf-id="hf-ehue" id="z-cur" viewBox="0 0 28 40"><path data-hf-id="hf-as2c" d="M2 2 L2 31 L9.5 24 L14.5 36 L19 34 L14 22.5 L24 22.5 Z" fill="#111" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg>
+    <div data-hf-id="hf-h60x" class="grain"></div>
+  </div>
+  <script src="assets/hb.js"></script>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      const $ = (s) => document.querySelector(s);
+      const bars = HB.bars($("#z-bars"));
+      const ease = gsap.parseEase("power3.inOut");
+
+      // Geometría de make-icon.swift a 520 px: barras de 34, separación 21,5, la quinta naranja.
+      const ICON = [0.18, 0.34, 0.56, 0.42, 0.66, 0.38, 0.22].map((h) => h * 520);
+      const CREAM = [245, 240, 230], ORANGE = [245, 166, 71], WHITE = [255, 255, 255];
+      const mix = (a, b, k) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(",")})`;
+      const M0 = 1.0, M1 = 1.75;
+
+      // 0: la píldora entra con el golpe; 1.0 → 1.75: se vuelve el ícono.
+      tl.fromTo("#z-box", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.5)", immediateRender: false }, 0);
+      HB.drive(tl, 0, 2.2, (t) => {
+        const k = ease(Math.max(0, Math.min(1, (t - M0) / (M1 - M0))));
+        const n = bars.length;
+        bars.forEach((b, i) => {
+          const shape = 1 - Math.abs(i - (n - 1) / 2) / n;
+          const syl = 0.5 + 0.5 * Math.sin(t * 9.1 + i * 0.9) * Math.sin(t * 3.7 + i * 1.7);
+          const live = Math.max(25, (0.25 + 0.75 * Math.abs(syl)) * 137 * (0.5 + shape));
+          const j = i - 2, inner = j >= 0 && j < 7;
+          const target = inner ? ICON[j] : 0;
+          b.style.height = live + (target - live) * k + "px";
+          b.style.width = 18.75 + ((inner ? 34 : 0) - 18.75) * k + "px";
+          b.style.margin = `0 ${9.375 + ((inner ? 10.75 : 0) - 9.375) * k}px`;
+          b.style.opacity = inner ? 1 : 1 - k;
+          b.style.backgroundColor = mix(WHITE, j === 4 ? ORANGE : CREAM, k);
+        });
+      });
+      tl.fromTo("#z-box", { width: 594, height: 212, borderRadius: 106 }, { width: 520, height: 520, borderRadius: 117, duration: M1 - M0, ease: "power3.inOut", immediateRender: false }, M0);
+      tl.fromTo("#z-grad", { opacity: 0 }, { opacity: 1, duration: 0.5, immediateRender: false }, M0 + 0.3);
+      tl.fromTo("#z-box", { boxShadow: "0 0 0 6px rgba(255,255,255,.18), 0 20px 50px rgba(0,0,0,.25)" }, { boxShadow: "0 0 0 0px rgba(255,255,255,0), 0 30px 80px rgba(28,27,26,.28)", duration: 0.6, immediateRender: false }, M0 + 0.2);
+      tl.to("#z-box", { scale: 1.06, duration: 0.14, yoyo: true, repeat: 1, ease: "power2.out" }, M1);
+
+      // 2.04: el ícono se corre y aparece la marca.
+      tl.to("#z-box", { x: -360, y: -150, scale: 0.55, duration: 0.6, ease: "power3.inOut" }, 2.04);
+      tl.fromTo("#z-word", { clipPath: "inset(0 100% 0 0)", x: -40 }, { clipPath: "inset(0 0% 0 0)", x: 0, duration: 0.6, ease: "power4.out", immediateRender: false }, 2.4);
+      tl.fromTo(HB.words($("#z-tag")), { opacity: 0, y: 30, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, y: 0, clipPath: "inset(0 0 0% 0)", duration: 0.45, stagger: 0.05, ease: "power4.out" }, 2.85);
+
+      // 4.07: llamada a la acción.
+      tl.fromTo("#z-cta", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)", immediateRender: false }, 4.07);
+      tl.fromTo("#z-meta", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power4.out", immediateRender: false }, 4.4);
+
+      // 6.1: el cursor hace clic en Descargar, en el último golpe.
+      tl.fromTo("#z-cur", { opacity: 0, x: 1500, y: 1000 }, { opacity: 1, x: 1010, y: 742, duration: 0.6, ease: "power3.out", immediateRender: false }, 5.4);
+      tl.fromTo("#z-cur", { scale: 1 }, { scale: 0.85, duration: 0.07, yoyo: true, repeat: 1, transformOrigin: "0 0", immediateRender: false }, 6.1);
+      tl.fromTo("#z-btn", { scale: 1 }, { scale: 0.94, duration: 0.07, yoyo: true, repeat: 1, immediateRender: false }, 6.1);
+      tl.fromTo("#z-url", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, ease: "power4.out", immediateRender: false }, 6.3);
+      tl.to("#z-cur", { opacity: 0, x: 1100, y: 800, duration: 0.4, ease: "power3.in" }, 6.9);
+
+      // Respiro final de cámara mientras la música se apaga.
+      tl.fromTo("#z-all", { scale: 1 }, { scale: 1.035, duration: 4.4, ease: "power1.inOut", immediateRender: false }, 6.5);
+
+      window.__timelines["cierre"] = tl;
+    })();
+  </script>
+</template>

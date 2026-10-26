@@ -1,0 +1,63 @@
+<template>
+  <link rel="stylesheet" href="assets/hb.css" />
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: var(--bg); font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: antialiased; }
+    #x-t { position: absolute; left: 0; right: 0; top: 64px; text-align: center; font-size: 110px; line-height: 1; }
+    #x-sub { position: absolute; left: 0; right: 0; top: 196px; text-align: center; font: 400 44px var(--sans); color: var(--muted); }
+    #x-t .word, #x-sub .word { opacity: 0; }
+    #x-win { left: 260px; top: 300px; width: 1400px; height: 540px; }
+    #x-name { border-radius: 8px; padding: 0 6px; color: var(--ink); }
+    .bub { display: inline-block; background: var(--panel); border-radius: 30px; padding: 22px 32px; font: 400 42px var(--sans); }
+    .input { position: absolute; left: 40px; right: 40px; bottom: 36px; height: 100px; border: 2px solid var(--line); border-radius: 50px; padding: 0 38px; font: 400 44px/96px var(--sans); }
+    .ph { color: #A8A39B; }
+    #x-out { display: none; }
+    #x-hit { border-radius: 8px; background: #E4D6F8; }
+    #x-rec, #x-proc, #x-live { opacity: 0; }
+  </style>
+  <div data-hf-id="hf-x4ob" id="root" data-composition-id="contexto" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-svuu" id="x-t" class="serif">Contexto de pantalla</div>
+    <div data-hf-id="hf-oj53" id="x-sub">Reconoce nombres y términos de la ventana</div>
+
+    <div data-hf-id="hf-1wt1" id="x-win" class="win">
+      <div data-hf-id="hf-ufsv" class="bar"><b data-hf-id="hf-xujp"></b><b data-hf-id="hf-ey49"></b><b data-hf-id="hf-g51c"></b><span data-hf-id="hf-2fv2">Mensajes · <span data-hf-id="hf-xi7x" id="x-name">Itziar</span></span></div>
+      <div data-hf-id="hf-1ced" style="padding:48px;"><span data-hf-id="hf-v7ky" class="bub">¡Ya te mandé el presupuesto!</span></div>
+      <div data-hf-id="hf-sc8k" class="input"><span data-hf-id="hf-3ysb" id="x-ph" class="ph">Mensaje</span><span data-hf-id="hf-chiv" id="x-out">Gracias, <span data-hf-id="hf-c3bt" id="x-hit">Itziar</span>.</span><span data-hf-id="hf-uuxe" class="caret"></span></div>
+    </div>
+
+    <div data-hf-id="hf-oa7t" class="ldock"><div data-hf-id="hf-3ptn" id="x-live" class="live"><span data-hf-id="hf-dwjf" id="x-livetxt"></span></div></div>
+    <div data-hf-id="hf-pz3p" class="dock">
+      <div data-hf-id="hf-tzzz" id="x-dash" class="dash"></div>
+      <div data-hf-id="hf-rzmk" id="x-rec" class="pill"><div data-hf-id="hf-ddvn" class="wave" id="x-wave"></div></div>
+      <div data-hf-id="hf-i6wz" id="x-proc" class="pill" style="padding:0 45px;"><div data-hf-id="hf-zx1w" class="dots"><i data-hf-id="hf-wt6k"></i><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-y7e5"></i></div></div>
+    </div>
+    <div data-hf-id="hf-h60x" class="grain"></div>
+  </div>
+  <script src="assets/hb.js"></script>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      const $ = (s) => document.querySelector(s);
+      const SOFT = "#E4D6F8";
+
+      tl.fromTo("#x-win", { scale: 0.9, y: 80 }, { scale: 1, y: 0, duration: 0.55, ease: "back.out(1.4)" }, 0);
+      tl.fromTo(HB.words($("#x-t")), { opacity: 0, scale: 1.3, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, stagger: 0.09, ease: "expo.out" }, 0.1);
+      tl.fromTo(HB.words($("#x-sub")), { opacity: 0, y: 30, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, y: 0, clipPath: "inset(0 0 0% 0)", duration: 0.4, stagger: 0.04, ease: "power4.out" }, 0.45);
+
+      // Dices el nombre como suena; se escribe como figura en pantalla.
+      const record = HB.pill(tl, { rec: "#x-rec", proc: "#x-proc", dash: "#x-dash", wave: "#x-wave", live: "#x-live", livetxt: "#x-livetxt" });
+      record(0.6, 1.0, { raw: "gracias isiar", proc: 0.38 });
+      tl.fromTo("#x-name", { backgroundColor: "rgba(228,214,248,0)" }, { backgroundColor: SOFT, duration: 0.2, immediateRender: false }, 1.75);
+      HB.drive(tl, 2.0, 0.1, (t) => {
+        $("#x-ph").style.display = t > 0.03 ? "none" : "inline";
+        $("#x-out").style.display = t > 0.03 ? "inline" : "none";
+      });
+      tl.to(["#x-hit", "#x-name"], { backgroundColor: "rgba(228,214,248,0)", duration: 0.7, ease: "power2.inOut" }, 3.0);
+
+      // Salida: látigo hacia arriba, entra el montaje.
+      tl.to(["#x-t", "#x-sub", "#x-win"], { y: -1150, filter: "blur(16px)", duration: 0.36, stagger: 0.025, ease: "power3.in" }, 3.64);
+      tl.to("#x-dash", { opacity: 0, duration: 0.2 }, 3.64);
+
+      window.__timelines["contexto"] = tl;
+    })();
+  </script>
+</template>

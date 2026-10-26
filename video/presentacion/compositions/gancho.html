@@ -1,0 +1,163 @@
+<template>
+  <link rel="stylesheet" href="assets/hb.css" />
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: var(--bg); font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: antialiased; }
+    #g-w1, #g-w2, #g-w3, #g-w4, #g-w5, #g-mail, #g-msg, #g-note, #g-doc, #g-t1, #g-key, #g-live, #g-rec, #g-proc { opacity: 0; }
+    #g-sent { position: absolute; left: 0; right: 0; top: 330px; display: flex; justify-content: center; align-items: center; gap: 40px; font-size: 150px; line-height: 1; }
+    #g-bigkey { height: 168px; min-width: 196px; padding: 0 46px; border-radius: 34px; font: 600 92px var(--sans); border-width: 3px; box-shadow: 0 16px 0 var(--fn-edge); }
+    #g-sent .comma { margin-left: -30px; }
+    #g-key { position: absolute; left: 610px; top: 951px; height: 66px; min-width: 92px; font: 600 34px var(--sans); border-radius: 16px; box-shadow: 0 7px 0 var(--fn-edge); }
+    .win .body { padding: 36px 48px; font: 400 44px/1.45 var(--sans); }
+    .row { display: flex; gap: 22px; padding: 22px 48px; border-bottom: 2px solid var(--line); font: 400 34px var(--sans); }
+    .row b { color: var(--muted); font-weight: 400; width: 120px; }
+    #g-t1 { position: absolute; left: 0; right: 0; top: 52px; text-align: center; font-size: 64px; }
+    .pm { color: var(--ink); }
+    #g-mailtxt .pm { color: var(--fn); }
+    .bub { display: inline-block; background: var(--panel); border-radius: 30px; padding: 20px 30px; font: 400 40px var(--sans); }
+    .input { position: absolute; left: 40px; right: 40px; bottom: 36px; height: 96px; border: 2px solid var(--line); border-radius: 48px; padding: 0 36px; font: 400 40px/92px var(--sans); color: var(--ink); }
+    .ph { color: #A8A39B; }
+    .win h3 { font: 400 56px var(--serif); padding: 40px 48px 0; }
+    #g-iris { position: absolute; left: 935px; top: 958px; width: 50px; height: 50px; border-radius: 50%; background: var(--fn); }
+  </style>
+  <div data-hf-id="hf-zsvd" id="root" data-composition-id="gancho" data-width="1920" data-height="1080">
+    <!-- A · Mantén fn, habla y suelta -->
+    <div data-hf-id="hf-e55b" id="g-sent" class="serif">
+      <span data-hf-id="hf-zo64" id="g-w1" class="word">Mantén</span>
+      <span data-hf-id="hf-ami7" id="g-bigkey" class="key fn">fn</span>
+      <span data-hf-id="hf-sy7n" id="g-w2" class="word comma">,</span>
+      <span data-hf-id="hf-k3b3" id="g-w3" class="word">habla</span>
+      <span data-hf-id="hf-m8i9" id="g-w4" class="word">y</span>
+      <span data-hf-id="hf-0aet" id="g-w5" class="word">suelta</span>
+    </div>
+
+    <!-- B · Correo -->
+    <div data-hf-id="hf-zt7v" id="g-mail" class="win" style="left:260px; top:150px; width:1400px; height:640px;">
+      <div data-hf-id="hf-ufsv" class="bar"><b data-hf-id="hf-xujp"></b><b data-hf-id="hf-ey49"></b><b data-hf-id="hf-g51c"></b><span data-hf-id="hf-2jk5">Nuevo mensaje</span></div>
+      <div data-hf-id="hf-x8kv" class="row"><b data-hf-id="hf-8kw3">Para:</b>Lucía Fernández</div>
+      <div data-hf-id="hf-6xib" class="row"><b data-hf-id="hf-1jxj">Asunto:</b>Almuerzo</div>
+      <div data-hf-id="hf-2t3w" class="body"><span data-hf-id="hf-4e0d" id="g-mailtxt"></span><span data-hf-id="hf-bf46" class="caret" id="g-caret1"></span></div>
+    </div>
+    <div data-hf-id="hf-bsl8" id="g-t1" class="serif">El texto aparece donde está el cursor</div>
+
+    <!-- C · Cualquier app -->
+    <div data-hf-id="hf-s5al" id="g-msg" class="win" style="left:260px; top:150px; width:1400px; height:640px;">
+      <div data-hf-id="hf-c51b" class="bar"><b data-hf-id="hf-fqqb"></b><b data-hf-id="hf-dr76"></b><b data-hf-id="hf-dcw5"></b><span data-hf-id="hf-lkup">Mensajes · Marta</span></div>
+      <div data-hf-id="hf-1ced" style="padding:48px;"><span data-hf-id="hf-zpro" class="bub">¿Al final vienes el viernes?</span></div>
+      <div data-hf-id="hf-sc8k" class="input"><span data-hf-id="hf-57bj" id="g-msgtxt" class="ph">Mensaje</span><span data-hf-id="hf-uuxe" class="caret"></span></div>
+    </div>
+    <div data-hf-id="hf-8c20" id="g-note" class="win" style="left:260px; top:150px; width:1400px; height:640px;">
+      <div data-hf-id="hf-bqqa" class="bar"><b data-hf-id="hf-ejt8"></b><b data-hf-id="hf-e5i7"></b><b data-hf-id="hf-c5z2"></b><span data-hf-id="hf-es6a">Notas</span></div>
+      <h3 data-hf-id="hf-hi42">Lanzamiento</h3>
+      <div data-hf-id="hf-6g9g" class="body"><span data-hf-id="hf-ljdm" id="g-notetxt"></span><span data-hf-id="hf-ltg6" class="caret"></span></div>
+    </div>
+    <div data-hf-id="hf-6smy" id="g-doc" class="win" style="left:260px; top:150px; width:1400px; height:640px;">
+      <div data-hf-id="hf-bcf9" class="bar"><b data-hf-id="hf-bro1"></b><b data-hf-id="hf-yhbf"></b><b data-hf-id="hf-yvmg"></b><span data-hf-id="hf-6991">Documento</span></div>
+      <h3 data-hf-id="hf-geh1">Resumen de la reunión</h3>
+      <div data-hf-id="hf-59cd" class="body"><span data-hf-id="hf-98og" id="g-doctxt"></span><span data-hf-id="hf-m7r7" class="caret"></span></div>
+    </div>
+
+    <div data-hf-id="hf-fkn4" id="g-iris"></div>
+
+    <!-- La píldora (FlowBar) y la tecla fn -->
+    <div data-hf-id="hf-gyui" id="g-key" class="key fn">fn</div>
+    <div data-hf-id="hf-oa7t" class="ldock"><div data-hf-id="hf-yzma" id="g-live" class="live"><span data-hf-id="hf-lnus" id="g-livetxt"></span></div></div>
+    <div data-hf-id="hf-pz3p" class="dock">
+      <div data-hf-id="hf-7eym" id="g-dash" class="dash"></div>
+      <div data-hf-id="hf-p6cz" id="g-rec" class="pill"><div data-hf-id="hf-wdca" class="wave" id="g-wave"></div></div>
+      <div data-hf-id="hf-mwnq" id="g-proc" class="pill" style="padding:0 45px;"><div data-hf-id="hf-zx1w" class="dots"><i data-hf-id="hf-wt6k"></i><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-y7e5"></i></div></div>
+    </div>
+    <div data-hf-id="hf-h60x" class="grain"></div>
+  </div>
+  <script src="assets/hb.js"></script>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      const $ = (s) => document.querySelector(s);
+      const bars = HB.bars($("#g-wave"));
+      const dots = [...document.querySelectorAll("#g-proc .dots i")];
+      const EDGE = "#B86E10";
+      const IN = { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power4.out" };
+      const BL = { opacity: 0, filter: "blur(8px)" };
+
+      // Estado inicial: frame 0 ya muestra la tecla y la rayita.
+
+      // Píldora: graba, procesa y vuelve a reposo. La tecla acompaña.
+      function record(at, dur, opts = {}) {
+        const key = opts.key || "#g-key";
+        const deep = key === "#g-bigkey" ? 14 : 6;
+        const sh = key === "#g-bigkey" ? 16 : 7;
+        tl.fromTo(key, { y: 0, boxShadow: `0 ${sh}px 0 ${EDGE}` }, { y: deep, boxShadow: `0 1px 0 ${EDGE}`, duration: 0.07, ease: "power2.out", immediateRender: false }, at);
+        tl.fromTo("#g-dash", { opacity: 1 }, { opacity: 0, duration: 0.12, immediateRender: false }, at);
+        tl.fromTo("#g-rec", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.4)", immediateRender: false }, at);
+        HB.drive(tl, at, dur, (t) => HB.setWave(bars, t + at, Math.min(1, t / 0.15)));
+        if (opts.raw) {
+          tl.fromTo("#g-live", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.25, ease: "expo.out", immediateRender: false }, at + 0.05);
+          HB.drive(tl, at + 0.1, dur - 0.2, (t) => HB.type($("#g-livetxt"), opts.raw, t / (dur - 0.35)));
+          tl.to("#g-live", { opacity: 0, duration: 0.15, ease: "power3.in" }, at + dur);
+        }
+        const end = at + dur;
+        if (opts.release !== false) {
+          tl.to(key, { y: 0, boxShadow: `0 ${sh}px 0 ${EDGE}`, duration: 0.12, ease: "back.out(2)" }, end);
+          tl.to("#g-rec", { opacity: 0, scale: 0.8, duration: 0.12, ease: "power3.in" }, end);
+          tl.fromTo("#g-proc", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.15, ease: "expo.out", immediateRender: false }, end + 0.04);
+          HB.drive(tl, end, 0.5, (t) => dots.forEach((d, i) => (d.style.opacity = 0.35 + 0.65 * Math.max(0, Math.sin(t * 12 - i * 0.7)))));
+          tl.to("#g-proc", { opacity: 0, scale: 0.8, duration: 0.12, ease: "power3.in" }, end + (opts.proc || 0.42));
+          tl.to("#g-dash", { opacity: 1, duration: 0.15 }, end + (opts.proc || 0.42) + 0.05);
+        }
+      }
+
+      // A · 0 → 4.1 s: la frase se arma en los beats.
+      record(0.035, 2.54, { key: "#g-bigkey" });
+      tl.fromTo("#g-w1", BL, IN, 0.3);
+      tl.fromTo(["#g-w2", "#g-w3"], BL, { ...IN, stagger: 0.07 }, 1.06);
+      tl.fromTo("#g-w4", BL, IN, 1.82);
+      tl.fromTo("#g-w5", BL, IN, 2.07);
+      tl.to("#g-sent", { y: -260, opacity: 0, filter: "blur(16px)", duration: 0.32, ease: "power3.in" }, 3.72);
+
+      // B · 4.1 → 10.2 s: el correo recibe el dictado con puntuación.
+      tl.fromTo("#g-mail", { opacity: 0, y: 420, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "power3.out" }, 4.0);
+      tl.fromTo("#g-key", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)", immediateRender: false }, 4.15);
+      const mailRaw = "hola estás libre para almorzar mañana hagamos a las 12 si te queda bien";
+      record(4.6, 3.05, { raw: mailRaw });
+      const mailOut = 'Hola<span class="pm">,</span> <span class="pm">¿</span>estás libre para almorzar mañana<span class="pm">?</span> Hagamos a las 12 si te queda bien<span class="pm">.</span>';
+      $("#g-mailtxt").innerHTML = mailOut;
+      HB.drive(tl, 8.12, 0.1, (t) => ($("#g-mailtxt").style.display = t > 0.05 ? "inline" : "none"));
+      tl.fromTo("#g-mail .pm", { color: "#F4A647" }, { color: "#1C1B1A", duration: 0.9, ease: "power2.inOut", immediateRender: false }, 8.6);
+      const t1 = HB.words($("#g-t1"));
+      tl.set("#g-t1", { opacity: 1 }, 8.3);
+      tl.fromTo(t1, { color: "#D3CFC7" }, { color: "#1C1B1A", duration: 0.25, stagger: 0.08, ease: "power2.out", immediateRender: false }, 8.3);
+      tl.to("#g-t1", { opacity: 0, filter: "blur(8px)", duration: 0.18, ease: "power3.in" }, 9.95);
+
+      // C · 10.2 → 14.3 s: el mismo gesto en otras apps; la píldora no se mueve.
+      const apps = [
+        { win: "#g-msg", txt: "#g-msgtxt", at: 10.205, raw: "sí llevo el postre", out: "¡Sí! Llevo el postre." },
+        { win: "#g-note", txt: "#g-notetxt", at: 11.73, raw: "ideas video corto landing nueva y demo en vivo el jueves", out: "Ideas: video corto, landing nueva y demo en vivo el jueves." },
+        { win: "#g-doc", txt: "#g-doctxt", at: 13.255, raw: "cerramos el presupuesto y la fecha de entrega", out: "Cerramos el presupuesto y la fecha de entrega." },
+      ];
+      let prev = "#g-mail";
+      apps.forEach((a) => {
+        tl.to(prev, { x: -1900, filter: "blur(20px)", duration: 0.3, ease: "power3.in" }, a.at - 0.27);
+        tl.fromTo(a.win, { opacity: 1, x: 1900, filter: "blur(20px)" }, { x: 0, filter: "blur(0px)", duration: 0.4, ease: "power3.out", immediateRender: false }, a.at);
+        record(a.at + 0.25, 0.68, { raw: a.raw, proc: 0.2 });
+        HB.drive(tl, a.at + 1.08, 0.1, (t) => {
+          const el = $(a.txt);
+          el.textContent = t > 0.05 ? a.out : (a.txt === "#g-msgtxt" ? "Mensaje" : "");
+          el.className = t > 0.05 ? "" : (a.txt === "#g-msgtxt" ? "ph" : "");
+        });
+        prev = a.win;
+      });
+
+      // 14.3 s: zoom out, las cuatro apps a la vez.
+      const grid = [["#g-mail", 650, 330], ["#g-msg", 1270, 330], ["#g-note", 650, 625], ["#g-doc", 1270, 625]];
+      grid.forEach(([w, cx, cy], i) => {
+        tl.to(w, { x: cx - 960, y: cy - 470, scale: 0.42, filter: "blur(0px)", opacity: 1, duration: 0.7, ease: "power2.inOut" }, 14.275 + i * 0.03);
+      });
+      tl.to("#g-key", { opacity: 0, scale: 0.6, duration: 0.2, ease: "power3.in" }, 15.2);
+      // Graba otra vez y el naranja se abre desde la píldora.
+      record(15.45, 0.9, { release: false });
+      tl.fromTo("#g-iris", { scale: 0 }, { scale: 96, duration: 0.5, ease: "power3.in" }, 15.8);
+
+      window.__timelines["gancho"] = tl;
+    })();
+  </script>
+</template>

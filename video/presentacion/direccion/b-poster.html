@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>B · Póster</title>
+<style>
+  @font-face { font-family: "HB Serif"; src: url("../assets/fonts/NewYork.ttf"); font-weight: 1 1000; }
+  @font-face { font-family: "HB Sans"; src: url("../assets/fonts/SFNS.ttf"); font-weight: 1 1000; }
+  @font-face { font-family: "HB Mono"; src: url("../assets/fonts/SFNSMono.ttf"); font-weight: 1 1000; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #1C1B1A; }
+  .stage { position: absolute; inset: 0; font-family: "HB Sans"; -webkit-font-smoothing: antialiased; }
+
+  /* Campos de color de la marca, cortados en diagonal como un póster */
+  .orange { position: absolute; left: -200px; top: -300px; width: 1700px; height: 1010px; background: #F4A647; transform: rotate(-7deg); transform-origin: left top; }
+  .lav { position: absolute; left: 1250px; top: -200px; width: 900px; height: 1500px; background: #7B4FC0; transform: rotate(-7deg); transform-origin: left top; }
+
+  /* Palabra gigante que no entra en cuadro */
+  .giant { position: absolute; left: -40px; top: -70px; font: 400 640px/1 "HB Serif"; letter-spacing: -0.045em; color: #1C1B1A; white-space: nowrap; }
+  .giant em { font-style: normal; color: #F5F0E6; }
+
+  /* Texto dictado: enorme, con la puntuación como golpe de color */
+  .said { position: absolute; left: 96px; top: 640px; width: 1180px; font: 600 108px/1.02 "HB Sans"; letter-spacing: -0.035em; color: #F5F0E6; }
+  .said .p { color: #F4A647; }
+
+  .pill { position: absolute; left: 1360px; top: 560px; height: 150px; padding: 0 64px; border-radius: 999px; display: flex; align-items: center; gap: 16px;
+    background: #0E0D0C; box-shadow: 0 0 0 4px rgba(255,255,255,.16), 0 30px 60px rgba(0,0,0,.35); transform: rotate(-7deg); }
+  .pill i { display: block; width: 13px; border-radius: 999px; background: #F5F0E6; }
+
+  .tag { position: absolute; font: 500 26px "HB Mono"; letter-spacing: .08em; text-transform: uppercase; }
+  .t1 { left: 1420px; top: 470px; color: #1C1B1A; transform: rotate(-7deg); }
+  .t2 { right: 60px; bottom: 54px; color: #F5F0E6; }
+  .t3 { left: 100px; bottom: 54px; color: rgba(245,240,230,.6); }
+  .rule { position: absolute; left: 96px; right: 60px; bottom: 104px; height: 2px; background: rgba(245,240,230,.18); }
+  .grain { position: absolute; inset: 0; opacity: .06; mix-blend-mode: multiply; background: url("../assets/img/grain.png"); background-size: 512px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="orange"></div>
+  <div class="lav"></div>
+  <div class="giant">Habla<em>.</em></div>
+  <div class="tag t1">Mail · formal</div>
+  <div class="pill" id="pill"></div>
+  <div class="said">Hola<span class="p">,</span> <span class="p">¿</span>estás libre para almorzar mañana<span class="p">?</span></div>
+  <div class="rule"></div>
+  <div class="tag t3">01 · Dictado</div>
+  <div class="tag t2">hablapp</div>
+  <div class="grain"></div>
+</div>
+<script>
+  const h = [30, 52, 84, 44, 104, 68, 116, 76, 50, 88, 40];
+  document.getElementById("pill").innerHTML = h.map(v => `<i style="height:${v}px"></i>`).join("");
+</script>
+</body>
+</html>

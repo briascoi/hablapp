@@ -1,0 +1,71 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-10-24T23:26:49.154Z",
+        "reason": "Dirección A Macro elegida por Isma: luz cálida y destello de la tecla son iluminación de escena en un video, no sombras de UI"
+      },
+      {
+        "rule": "radial-spotlight-glow",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-10-24T23:31:36.025Z",
+        "reason": "Dirección A Macro elegida por Isma: la luz cálida es la iluminación de escena del video"
+      },
+      {
+        "rule": "buried-raster",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-10-24T23:31:36.941Z",
+        "reason": "Grano estático a .06 intencional en video (regla de Isma: grano sí, animado no)"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-10-24T23:31:37.629Z",
+        "reason": "Es la barra lateral de la ventana tipo Slack del montaje, 230px, no un borde de acento"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-10-24T23:31:38.559Z",
+        "reason": "Ventanas de app ilustradas en un video: filas con 22px verticales y sin borde lateral"
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-10-25T04:00:00.000Z",
+        "reason": "Video, no UI: las ventanas simuladas recortan su contenido a propósito, como una ventana real; no hay menús ni tooltips que deban escapar"
+      },
+      {
+        "rule": "ai-color-palette",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-10-25T15:08:55.781Z",
+        "reason": "Claude: el violeta #7B4FC0 es el color del modo comando en la UI real de Hablapp, usado solo en esa escena (regla en GUION.md); no hay degradés violetas ni cian decorativos"
+      }
+    ]
+  }
+}

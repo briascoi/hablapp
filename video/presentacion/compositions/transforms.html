@@ -1,0 +1,102 @@
+<template>
+  <link rel="stylesheet" href="assets/hb.css" />
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(120deg, #1F3B3E 0%, #2F5D62 55%, #6B4A33 100%); font-family: var(--sans); color: var(--dark-ink); -webkit-font-smoothing: antialiased; }
+    .t-t { position: absolute; left: 0; right: 0; top: 110px; text-align: center; font-size: 150px; line-height: 1; }
+    .t-t .word { opacity: 0; }
+    #t-keys { position: absolute; left: 0; right: 0; top: 400px; display: flex; justify-content: center; gap: 44px; }
+    #t-keys .key { width: 200px; height: 200px; border-radius: 40px; font: 500 104px var(--sans); border-width: 3px; box-shadow: 0 16px 0 #CFCAC2; opacity: 0; }
+    #t-cap { position: absolute; left: 0; right: 0; top: 700px; text-align: center; font: 400 44px var(--sans); color: rgba(237,235,231,.85); opacity: 0; }
+    .t-row { position: absolute; left: 160px; width: 620px; height: 150px; padding: 30px 36px; color: var(--ink); opacity: 0; }
+    .t-row h4 { font: 400 46px var(--serif); }
+    .t-row p { font: 400 28px var(--sans); color: var(--muted); margin-top: 8px; }
+    .t-row .sc { position: absolute; right: 30px; top: 30px; font: 500 28px var(--sans); color: var(--muted); background: var(--panel); border: 2px solid var(--line); border-radius: 10px; padding: 4px 12px; }
+    #t-ring { position: absolute; left: 154px; top: 642px; width: 632px; height: 162px; border: 6px solid #B794F6; border-radius: 32px; opacity: 0; }
+    #t-doc { position: absolute; left: 840px; top: 300px; width: 920px; height: 498px; color: var(--ink); opacity: 0; }
+    #t-doc .bar { height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 2px solid var(--line); }
+    #t-doc .bar b { width: 18px; height: 18px; border-radius: 50%; background: #E2DED7; }
+    .t-txt { position: absolute; left: 52px; right: 52px; top: 120px; font: 400 56px/1.4 var(--sans); }
+    #t-en .word { opacity: 0; }
+    .t-app { position: absolute; display: flex; align-items: center; gap: 0; opacity: 0; }
+    .t-app .chip2 { background: var(--card); color: var(--ink); font: 600 46px var(--sans); padding: 26px 44px; border-radius: 26px; width: 330px; text-align: center; }
+    .t-app .ln { width: 260px; height: 5px; background: rgba(237,235,231,.85); margin: 0 24px; transform-origin: 0 50%; position: relative; }
+    .t-app .ln::after { content: ""; position: absolute; right: -4px; top: -11px; border-left: 22px solid rgba(237,235,231,.85); border-top: 13px solid transparent; border-bottom: 13px solid transparent; }
+    .t-app .tgt { background: var(--card); color: var(--ink); border-radius: 26px; padding: 24px 40px; width: 640px; }
+    .t-app .tgt h4 { font: 400 46px var(--serif); }
+    .t-app .tgt p { font: 400 30px var(--sans); color: var(--muted); margin-top: 6px; }
+    #t-wipe { position: absolute; inset: 0; background: var(--bg); }
+  </style>
+  <div data-hf-id="hf-w4wi" id="root" data-composition-id="transforms" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-6k4b" id="t-t1" class="t-t serif">Transforms</div>
+    <div data-hf-id="hf-n5zi" id="t-t2" class="t-t serif" style="font-size:104px; top:120px">Transform por app</div>
+
+    <div data-hf-id="hf-tvn4" id="t-keys"><span data-hf-id="hf-b4q3" class="key">⌃</span><span data-hf-id="hf-7jyu" class="key">⌘</span><span data-hf-id="hf-t0zf" class="key">3</span></div>
+    <div data-hf-id="hf-qi9f" id="t-cap">Control + Command + 1 a 9</div>
+
+    <div data-hf-id="hf-8qgb" class="t-row card" style="top:300px"><h4 data-hf-id="hf-f649">Pulir</h4><p data-hf-id="hf-1cjy">Más claro y conciso</p><span data-hf-id="hf-t213" class="sc">⌃⌘1</span></div>
+    <div data-hf-id="hf-02lh" class="t-row card" style="top:474px"><h4 data-hf-id="hf-3mew">Prompt engineer</h4><p data-hf-id="hf-qav4">Mejora el prompt con tu propia API</p><span data-hf-id="hf-snq2" class="sc">⌃⌘2</span></div>
+    <div data-hf-id="hf-kx0o" class="t-row card" id="t-r3" style="top:648px"><h4 data-hf-id="hf-auow">Al inglés</h4><p data-hf-id="hf-n9o2">Traduce manteniendo el tono</p><span data-hf-id="hf-s9f1" class="sc">⌃⌘3</span></div>
+    <div data-hf-id="hf-lj0a" id="t-ring"></div>
+
+    <div data-hf-id="hf-xo5p" id="t-doc" class="card">
+      <div data-hf-id="hf-ufsv" class="bar"><b data-hf-id="hf-xujp"></b><b data-hf-id="hf-ey49"></b><b data-hf-id="hf-g51c"></b></div>
+      <div data-hf-id="hf-5xkx" class="t-txt" id="t-es">La reunión de mañana pasa al jueves a las 10.</div>
+      <div data-hf-id="hf-x9l6" class="t-txt" id="t-en">Tomorrow's meeting moves to Thursday at 10.</div>
+    </div>
+
+    <div data-hf-id="hf-8h6o" class="t-app" id="t-a1" style="left:320px; top:380px"><div data-hf-id="hf-nh1j" class="chip2">ChatGPT</div><div data-hf-id="hf-gmyq" class="ln"></div><div data-hf-id="hf-6cet" class="tgt"><h4 data-hf-id="hf-z6z4">Prompt engineer</h4><p data-hf-id="hf-objs">Mejora el prompt con tu propia API</p></div></div>
+    <div data-hf-id="hf-z7v0" class="t-app" id="t-a2" style="left:320px; top:620px"><div data-hf-id="hf-tioa" class="chip2">Claude</div><div data-hf-id="hf-ru7a" class="ln"></div><div data-hf-id="hf-zs09" class="tgt"><h4 data-hf-id="hf-y021">Prompt engineer</h4><p data-hf-id="hf-n4mp">Mejora el prompt con tu propia API</p></div></div>
+
+    <div data-hf-id="hf-o39p" id="t-wipe"></div>
+    <div data-hf-id="hf-nhax" class="grain" style="mix-blend-mode: screen; opacity: .04"></div>
+  </div>
+  <script src="assets/hb.js"></script>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      const $ = (s) => document.querySelector(s);
+      const B = 0.508;
+      const punch = (els, at, st = 0.08) => tl.fromTo(els, { opacity: 0, scale: 1.3, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, stagger: st, ease: "expo.out" }, at);
+
+      // El atajo se arma tecla por tecla, en los beats.
+      punch(HB.words($("#t-t1")), 0.05);
+      const keys = [...document.querySelectorAll("#t-keys .key")];
+      keys.forEach((k, i) => tl.fromTo(k, { opacity: 0, scale: 1.5, y: -40, filter: "blur(10px)" }, { opacity: 1, scale: 1, y: 0, filter: "blur(0px)", duration: 0.4, ease: "back.out(1.5)", immediateRender: false }, 0.25 + i * B));
+      tl.fromTo("#t-cap", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "power4.out", immediateRender: false }, 0.6);
+      tl.fromTo(keys, { y: 0, boxShadow: "0 16px 0 #CFCAC2" }, { y: 14, boxShadow: "0 2px 0 #CFCAC2", duration: 0.07, ease: "power2.out", immediateRender: false }, 1.68);
+      tl.to(keys, { y: 0, boxShadow: "0 16px 0 #CFCAC2", duration: 0.12, ease: "back.out(2)" }, 1.76);
+
+      // 2.03: la lista real de transforms y el texto del comando anterior.
+      tl.to(keys, { opacity: 0, scale: 0.4, y: -200, duration: 0.3, stagger: 0.03, ease: "power3.in" }, 1.9);
+      tl.to("#t-cap", { opacity: 0, duration: 0.2 }, 1.9);
+      tl.to("#t-t1", { y: -60, scale: 0.6, duration: 0.45, ease: "power2.inOut" }, 1.85);
+      tl.fromTo(".t-row", { opacity: 0, x: -700 }, { opacity: 1, x: 0, duration: 0.55, stagger: 0.08, ease: "expo.out", immediateRender: false }, 2.03);
+      tl.fromTo("#t-doc", { opacity: 0, x: 600 }, { opacity: 1, x: 0, duration: 0.55, ease: "expo.out", immediateRender: false }, 2.1);
+      tl.fromTo("#t-ring", { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)", immediateRender: false }, 3.05);
+      tl.fromTo("#t-r3 .sc", { scale: 1 }, { scale: 1.25, duration: 0.1, yoyo: true, repeat: 1, immediateRender: false }, 3.3);
+
+      // 4.07: al inglés, manteniendo el tono.
+      const es = HB.words($("#t-es")), en = HB.words($("#t-en"));
+      tl.to(es, { opacity: 0, filter: "blur(8px)", y: -20, duration: 0.18, stagger: 0.015, ease: "power3.in" }, 3.8);
+      punch(en, 4.07, 0.06);
+
+      // 6.1: transform por app.
+      tl.to([".t-row", "#t-ring"], { opacity: 0, x: -400, duration: 0.3, stagger: 0.03, ease: "power3.in" }, 5.8);
+      tl.to("#t-doc", { opacity: 0, x: 400, duration: 0.3, ease: "power3.in" }, 5.8);
+      tl.to("#t-t1", { opacity: 0, filter: "blur(10px)", duration: 0.2, ease: "power3.in" }, 5.85);
+      punch(HB.words($("#t-t2")), 6.1, 0.1);
+      ["#t-a1", "#t-a2"].forEach((a, i) => {
+        const at = 6.25 + i * 0.25;
+        tl.fromTo(a, { opacity: 0 }, { opacity: 1, duration: 0.01, immediateRender: false }, at);
+        tl.fromTo(`${a} .chip2`, { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.6)", immediateRender: false }, at);
+        tl.fromTo(`${a} .ln`, { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power3.out", immediateRender: false }, at + 0.12);
+        tl.fromTo(`${a} .tgt`, { x: -60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "expo.out", immediateRender: false }, at + 0.3);
+      });
+
+      // Salida: hoja cálida desde la izquierda.
+      tl.fromTo("#t-wipe", { xPercent: -100 }, { xPercent: 0, duration: 0.45, ease: "power4.inOut" }, 7.69);
+
+      window.__timelines["transforms"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>A · Macro</title>
+<style>
+  @font-face { font-family: "HB Serif"; src: url("../assets/fonts/NewYork.ttf"); font-weight: 1 1000; }
+  @font-face { font-family: "HB Sans"; src: url("../assets/fonts/SFNS.ttf"); font-weight: 1 1000; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0B0908; }
+  .stage { position: absolute; inset: 0; font-family: "HB Sans"; -webkit-font-smoothing: antialiased; color: #F5F0E6;
+    background:
+      radial-gradient(900px 620px at 30% 78%, rgba(245,166,71,.34), transparent 70%),
+      radial-gradient(1100px 700px at 72% 30%, rgba(80,58,40,.55), transparent 70%),
+      linear-gradient(180deg, #14100D 0%, #0B0908 100%); }
+
+  /* Fondo: ventana de Mail inclinada y fuera de foco */
+  .bgwin { position: absolute; left: 980px; top: 120px; width: 1180px; height: 760px; border-radius: 34px;
+    background: #F3F1EC; transform: perspective(1800px) rotateY(-26deg) rotateX(8deg); transform-origin: left center;
+    filter: blur(12px) brightness(.38) sepia(.55); box-shadow: 0 60px 140px rgba(0,0,0,.6); }
+  .bgwin .bar { height: 70px; border-bottom: 2px solid #E6E3DD; display: flex; gap: 14px; align-items: center; padding: 0 30px; }
+  .bgwin .bar i { width: 20px; height: 20px; border-radius: 50%; background: #DDD8D0; }
+  .bgwin p { margin: 40px 50px; font: 400 44px/1.4 "HB Sans"; color: #1C1B1A; }
+
+  /* Texto dictado en un plano 3D: entra nítido y se pierde en la profundidad */
+  .ribbon { position: absolute; left: 905px; top: 318px; width: 1500px; transform: perspective(1400px) rotateY(-24deg) rotateX(6deg); transform-origin: left center; }
+  .ribbon span { font: 400 104px/1.1 "HB Serif"; white-space: nowrap; letter-spacing: -0.01em; }
+  .ribbon .p { color: #F5A647; }
+  .ribbon .far { filter: blur(3px); opacity: .55; }
+  .ribbon .farther { filter: blur(6px); opacity: .3; }
+
+  /* Píldora macro */
+  .pill { position: absolute; left: 250px; top: 300px; height: 210px; padding: 0 92px; border-radius: 999px; display: flex; align-items: center; gap: 22px;
+    background: linear-gradient(180deg, #1A1715 0%, #050404 100%);
+    box-shadow: 0 0 0 4px rgba(255,255,255,.14), inset 0 3px 0 rgba(255,255,255,.12), 0 40px 90px rgba(0,0,0,.7); }
+  .pill i { display: block; width: 18px; border-radius: 999px; background: linear-gradient(180deg, #fff, #E9E2D5); }
+  .pill::after { content: ""; position: absolute; left: 60px; right: 60px; top: 10px; height: 60px; border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255,255,255,.12), transparent); }
+
+  /* Tecla fn extruida, en macro, iluminada por la propia luz naranja */
+  .keywrap { position: absolute; left: -40px; top: 560px; width: 760px; height: 760px; perspective: 1600px; }
+  .key { position: absolute; left: 120px; top: 40px; width: 520px; height: 520px; transform-style: preserve-3d;
+    transform: rotateX(54deg) rotateZ(-24deg) translateZ(-30px); }
+  .key .side { position: absolute; inset: 0; border-radius: 96px; background: #8A4F08; }
+  .key .top { position: absolute; inset: 0; border-radius: 96px; transform: translateZ(64px);
+    background: radial-gradient(120% 90% at 30% 20%, #FFD18C 0%, #F7AE52 38%, #E08A28 75%, #C4721A 100%);
+    box-shadow: inset 0 6px 0 rgba(255,236,200,.7), inset 0 -10px 24px rgba(120,60,0,.45); }
+  .key .top b { position: absolute; left: 70px; top: 60px; font: 600 150px "HB Sans"; color: #3A2200; opacity: .85; }
+  .keyshadow { position: absolute; left: 60px; top: 380px; width: 640px; height: 260px; border-radius: 50%; background: rgba(0,0,0,.75); filter: blur(50px); }
+
+  .cap { position: absolute; left: 96px; top: 92px; font: 500 30px "HB Sans"; letter-spacing: .02em; color: rgba(245,240,230,.55); }
+  .cap b { color: #F5A647; font-weight: 600; }
+  .grain { position: absolute; inset: 0; opacity: .07; mix-blend-mode: overlay; background: url("../assets/img/grain.png"); background-size: 512px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="bgwin"><div class="bar"><i></i><i></i><i></i></div><p>Para: Lucía Fernández<br>Asunto: Almuerzo</p></div>
+
+  <div class="ribbon">
+    <span>Hola<span class="p">,</span> <span class="p">¿</span>estás libre </span><span class="far">para almorzar </span><span class="farther">mañana<span class="p">?</span></span>
+  </div>
+
+  <div class="pill" id="pill"></div>
+
+  <div class="keyshadow"></div>
+  <div class="keywrap">
+    <div class="key">
+      <div class="side" style="transform:translateZ(0px);background:#6E3E05"></div>
+      <div class="side" style="transform:translateZ(5px);background:#764306"></div>
+      <div class="side" style="transform:translateZ(10px);background:#7E4807"></div>
+      <div class="side" style="transform:translateZ(15px);background:#864D08"></div>
+      <div class="side" style="transform:translateZ(20px);background:#8E5209"></div>
+      <div class="side" style="transform:translateZ(25px);background:#96570A"></div>
+      <div class="side" style="transform:translateZ(30px);background:#9E5C0B"></div>
+      <div class="side" style="transform:translateZ(35px);background:#A6610C"></div>
+      <div class="side" style="transform:translateZ(40px);background:#AE660E"></div>
+      <div class="side" style="transform:translateZ(45px);background:#B66B0F"></div>
+      <div class="side" style="transform:translateZ(50px);background:#BE7011"></div>
+      <div class="side" style="transform:translateZ(55px);background:#C67513"></div>
+      <div class="top"><b>fn</b></div>
+    </div>
+  </div>
+
+  <div class="cap">Mantén <b>fn</b> y habla</div>
+  <div class="grain"></div>
+</div>
+<script>
+  const h = [46, 78, 120, 64, 150, 98, 170, 110, 72, 128, 58];
+  document.getElementById("pill").innerHTML = h.map(v => `<i style="height:${v}px"></i>`).join("");
+</script>
+</body>
+</html>
